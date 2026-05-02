@@ -43,3 +43,9 @@ build/
 /.idea/awsToolkit.xml
 /.idea/vcs.xml
 /.idea/workspace.xml
+
+### Terraform ###
+/infra/terraform/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
