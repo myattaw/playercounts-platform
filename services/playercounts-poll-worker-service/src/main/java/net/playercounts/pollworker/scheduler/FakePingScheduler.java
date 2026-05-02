@@ -1,45 +1,51 @@
 package net.playercounts.pollworker.scheduler;
 
 import net.playercounts.contracts.ServerPingResultEvent;
+import net.playercounts.pollworker.model.MinecraftPingResult;
 import net.playercounts.pollworker.service.FakeServerRegistryService;
+import net.playercounts.pollworker.service.MinecraftPingService;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import java.util.Random;
 
 @Component
 public class FakePingScheduler {
 
     private final KafkaTemplate<String, ServerPingResultEvent> kafkaTemplate;
     private final FakeServerRegistryService registryService;
-    private final Random random = new Random();
+    private final MinecraftPingService minecraftPingService;
 
     public FakePingScheduler(KafkaTemplate<String, ServerPingResultEvent> kafkaTemplate,
-                             FakeServerRegistryService registryService) {
+                             FakeServerRegistryService registryService,
+                             MinecraftPingService minecraftPingService) {
         this.kafkaTemplate = kafkaTemplate;
         this.registryService = registryService;
+        this.minecraftPingService = minecraftPingService;
     }
 
-    @Scheduled(fixedRate = 5000)
-    public void publishFakePingBatch() {
+    @Scheduled(fixedRate = 15000)
+    public void publishRealPingBatch() {
+
+        int emitted = 0;
 
         for (String serverAddress : registryService.getTrackedServers()) {
 
-            int players = 100 + random.nextInt(50000);
-            int maxPlayers = 1000 + random.nextInt(200000);
+            MinecraftPingResult pingResult = minecraftPingService.ping(serverAddress, 25565);
 
             ServerPingResultEvent event = new ServerPingResultEvent(
                     serverAddress,
-                    players,
-                    maxPlayers,
+                    pingResult.getOnlinePlayers(),
+                    pingResult.getMaxPlayers(),
+                    pingResult.getLatencyMs(),
+                    pingResult.isOnline(),
                     System.currentTimeMillis()
             );
 
             kafkaTemplate.send("server-ping-results", event);
+            emitted++;
         }
 
-        System.out.println("POLL WORKER BATCH COMPLETE -> emitted "
-                + registryService.getTrackedServers().size() + " server ping events");
+        System.out.println("POLL WORKER BATCH COMPLETE -> emitted " + emitted + " REAL minecraft ping events");
     }
+
 }

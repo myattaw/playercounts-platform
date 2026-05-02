@@ -38,6 +38,47 @@
     </properties>
 
     <!-- ========================= -->
+    <!-- REPOSITORY MANAGEMENT    -->
+    <!-- ========================= -->
+    <repositories>
+        <!-- Maven Central -->
+        <repository>
+            <id>maven-central</id>
+            <url>https://repo.maven.apache.org/maven2/</url>
+        </repository>
+
+        <!-- Sonatype OSS Snapshots -->
+        <repository>
+            <id>sonatype-oss-snapshots</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+        </repository>
+
+        <!-- OpenCollab Releases -->
+        <repository>
+            <id>opencollab-releases</id>
+            <url>https://repo.opencollab.dev/maven-releases/</url>
+        </repository>
+
+        <!-- OpenCollab Snapshots -->
+        <repository>
+            <id>opencollab-snapshots</id>
+            <url>https://repo.opencollab.dev/maven-snapshots/</url>
+        </repository>
+
+        <!-- JitPack -->
+        <repository>
+            <id>jitpack</id>
+            <url>https://jitpack.io</url>
+        </repository>
+
+        <!-- JCenter (deprecated, only if needed) -->
+        <repository>
+            <id>jcenter</id>
+            <url>https://jcenter.bintray.com</url>
+        </repository>
+    </repositories>
+
+    <!-- ========================= -->
     <!-- DEPENDENCY MANAGEMENT    -->
     <!-- ========================= -->
     <dependencyManagement>

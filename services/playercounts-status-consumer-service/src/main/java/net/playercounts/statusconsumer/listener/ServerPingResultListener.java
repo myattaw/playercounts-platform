@@ -32,6 +32,8 @@ public class ServerPingResultListener {
                 event.getServerAddress(),
                 event.getOnlinePlayers(),
                 event.getMaxPlayers(),
+                event.getLatencyMs(),
+                event.isOnline(),
                 event.getTimestamp()
         );
 

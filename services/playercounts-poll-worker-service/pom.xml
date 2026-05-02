@@ -45,6 +45,12 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.geysermc.mcprotocollib</groupId>
+            <artifactId>protocol</artifactId>
+            <version>1.21.4-SNAPSHOT</version>
+        </dependency>
+
     </dependencies>
 
     <build>

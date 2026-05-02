@@ -5,15 +5,24 @@ public class ServerPingResultEvent {
     private String serverAddress;
     private int onlinePlayers;
     private int maxPlayers;
+    private long latencyMs;
+    private boolean online;
     private long timestamp;
 
     public ServerPingResultEvent() {
     }
 
-    public ServerPingResultEvent(String serverAddress, int onlinePlayers, int maxPlayers, long timestamp) {
+    public ServerPingResultEvent(String serverAddress,
+                                 int onlinePlayers,
+                                 int maxPlayers,
+                                 long latencyMs,
+                                 boolean online,
+                                 long timestamp) {
         this.serverAddress = serverAddress;
         this.onlinePlayers = onlinePlayers;
         this.maxPlayers = maxPlayers;
+        this.latencyMs = latencyMs;
+        this.online = online;
         this.timestamp = timestamp;
     }
 
@@ -41,6 +50,22 @@ public class ServerPingResultEvent {
         this.maxPlayers = maxPlayers;
     }
 
+    public long getLatencyMs() {
+        return latencyMs;
+    }
+
+    public void setLatencyMs(long latencyMs) {
+        this.latencyMs = latencyMs;
+    }
+
+    public boolean isOnline() {
+        return online;
+    }
+
+    public void setOnline(boolean online) {
+        this.online = online;
+    }
+
     public long getTimestamp() {
         return timestamp;
     }
@@ -55,6 +80,8 @@ public class ServerPingResultEvent {
                 "serverAddress='" + serverAddress + '\'' +
                 ", onlinePlayers=" + onlinePlayers +
                 ", maxPlayers=" + maxPlayers +
+                ", latencyMs=" + latencyMs +
+                ", online=" + online +
                 ", timestamp=" + timestamp +
                 '}';
     }
