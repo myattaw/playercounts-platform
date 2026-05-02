@@ -1,10 +1,11 @@
 spring:
+  profiles:
+    active: local
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: ${STATUS_CONSUMER_GROUP_ID:playercounts-status-consumer-group}
       auto-offset-reset: earliest
-
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -22,3 +23,8 @@ spring:
 
 status-consumer:
   kafka-topic: ${STATUS_CONSUMER_KAFKA_TOPIC:server-ping-results}
+
+cloud:
+  sqs:
+    queue-url: ${SQS_QUEUE_URL:}
+    aws-region: ${AWS_REGION:us-east-1}
