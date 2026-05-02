@@ -16,3 +16,6 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: false
+
+playercounts:
+  redis-live-prefix: ${REDIS_LIVE_PREFIX:live:server:}
