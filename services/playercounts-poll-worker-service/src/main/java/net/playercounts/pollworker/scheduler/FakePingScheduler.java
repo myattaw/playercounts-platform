@@ -8,44 +8,60 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+
 @Component
 public class FakePingScheduler {
 
     private final KafkaTemplate<String, ServerPingResultEvent> kafkaTemplate;
     private final FakeServerRegistryService registryService;
     private final MinecraftPingService minecraftPingService;
+    private final ExecutorService pollWorkerExecutor;
 
     public FakePingScheduler(KafkaTemplate<String, ServerPingResultEvent> kafkaTemplate,
                              FakeServerRegistryService registryService,
-                             MinecraftPingService minecraftPingService) {
+                             MinecraftPingService minecraftPingService,
+                             ExecutorService pollWorkerExecutor) {
         this.kafkaTemplate = kafkaTemplate;
         this.registryService = registryService;
         this.minecraftPingService = minecraftPingService;
+        this.pollWorkerExecutor = pollWorkerExecutor;
     }
 
     @Scheduled(fixedRate = 15000)
     public void publishRealPingBatch() {
+        long batchStart = System.currentTimeMillis();
 
-        int emitted = 0;
+        List<String> servers = registryService.getTrackedServers();
 
-        for (String serverAddress : registryService.getTrackedServers()) {
+        List<CompletableFuture<Void>> futures = servers.stream()
+                .map(serverAddress -> CompletableFuture.runAsync(() -> {
+                    MinecraftPingResult pingResult = minecraftPingService.ping(serverAddress, 25565);
 
-            MinecraftPingResult pingResult = minecraftPingService.ping(serverAddress, 25565);
+                    ServerPingResultEvent event = new ServerPingResultEvent(
+                            serverAddress,
+                            pingResult.getOnlinePlayers(),
+                            pingResult.getMaxPlayers(),
+                            pingResult.getLatencyMs(),
+                            pingResult.isOnline(),
+                            System.currentTimeMillis()
+                    );
 
-            ServerPingResultEvent event = new ServerPingResultEvent(
-                    serverAddress,
-                    pingResult.getOnlinePlayers(),
-                    pingResult.getMaxPlayers(),
-                    pingResult.getLatencyMs(),
-                    pingResult.isOnline(),
-                    System.currentTimeMillis()
-            );
+                    kafkaTemplate.send("server-ping-results", serverAddress, event);
+                }, pollWorkerExecutor))
+                .toList();
 
-            kafkaTemplate.send("server-ping-results", event);
-            emitted++;
-        }
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
-        System.out.println("POLL WORKER BATCH COMPLETE -> emitted " + emitted + " REAL minecraft ping events");
+        long durationMs = System.currentTimeMillis() - batchStart;
+
+        System.out.println("POLL WORKER BATCH COMPLETE -> emitted "
+                + servers.size()
+                + " real minecraft ping events in "
+                + durationMs
+                + "ms");
     }
 
 }
