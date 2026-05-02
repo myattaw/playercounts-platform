@@ -34,6 +34,46 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+resource "aws_iam_role_policy_attachment" "ecs_task_basic_execution_readonly" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
+}
+
+resource "aws_iam_role" "ecs_task_role" {
+  name = "${var.project_name}-${var.environment}-ecs-task-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Principal = {
+        Service = "ecs-tasks.amazonaws.com"
+      }
+      Effect = "Allow"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_sqs_policy" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSQSFullAccess"
+}
+
+resource "aws_cloudwatch_log_group" "poll_worker_logs" {
+  name              = "/ecs/playercounts-poll-worker"
+  retention_in_days = 7
+}
+
+resource "aws_cloudwatch_log_group" "status_consumer_logs" {
+  name              = "/ecs/playercounts-status-consumer"
+  retention_in_days = 7
+}
+
+resource "aws_cloudwatch_log_group" "api_gateway_logs" {
+  name              = "/ecs/playercounts-api-gateway"
+  retention_in_days = 7
+}
+
 # Poll worker task
 resource "aws_ecs_task_definition" "poll_worker_task" {
   family                   = "${var.project_name}-poll-worker"
@@ -42,6 +82,7 @@ resource "aws_ecs_task_definition" "poll_worker_task" {
   cpu                      = 512
   memory                   = 1024
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([
     {
@@ -50,6 +91,8 @@ resource "aws_ecs_task_definition" "poll_worker_task" {
       essential = true
 
       environment = [
+        { name = "SPRING_PROFILES_ACTIVE", value = "cloud" },
+        { name = "AWS_REGION", value = var.aws_region },
         { name = "SQS_QUEUE_URL", value = aws_sqs_queue.telemetry_events_queue.id }
       ]
 
@@ -73,6 +116,7 @@ resource "aws_ecs_task_definition" "status_consumer_task" {
   cpu                      = 512
   memory                   = 1024
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([
     {
@@ -81,6 +125,8 @@ resource "aws_ecs_task_definition" "status_consumer_task" {
       essential = true
 
       environment = [
+        { name = "SPRING_PROFILES_ACTIVE", value = "cloud" },
+        { name = "AWS_REGION", value = var.aws_region },
         { name = "REDIS_HOST", value = aws_elasticache_cluster.playercounts_redis.cache_nodes[0].address },
         { name = "POSTGRES_JDBC_URL", value = "jdbc:postgresql://${aws_db_instance.playercounts_postgres.address}:5432/playercounts" },
         { name = "POSTGRES_USERNAME", value = "playercounts" },
@@ -108,6 +154,7 @@ resource "aws_ecs_task_definition" "api_gateway_task" {
   cpu                      = 512
   memory                   = 1024
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([
     {
@@ -123,6 +170,8 @@ resource "aws_ecs_task_definition" "api_gateway_task" {
       ]
 
       environment = [
+        { name = "SPRING_PROFILES_ACTIVE", value = "cloud" },
+        { name = "AWS_REGION", value = var.aws_region },
         { name = "REDIS_HOST", value = aws_elasticache_cluster.playercounts_redis.cache_nodes[0].address },
         { name = "POSTGRES_JDBC_URL", value = "jdbc:postgresql://${aws_db_instance.playercounts_postgres.address}:5432/playercounts" },
         { name = "POSTGRES_USERNAME", value = "playercounts" },
@@ -142,8 +191,8 @@ resource "aws_ecs_task_definition" "api_gateway_task" {
 }
 
 # Poll Worker service
-
 resource "aws_ecs_service" "poll_worker_service" {
+  count           = var.enable_ecs_services ? 1 : 0
   name            = "${var.project_name}-poll-worker-service"
   cluster         = aws_ecs_cluster.playercounts_cluster.id
   task_definition = aws_ecs_task_definition.poll_worker_task.arn
@@ -158,8 +207,8 @@ resource "aws_ecs_service" "poll_worker_service" {
 }
 
 # Status Consumer service
-
 resource "aws_ecs_service" "status_consumer_service" {
+  count           = var.enable_ecs_services ? 1 : 0
   name            = "${var.project_name}-status-consumer-service"
   cluster         = aws_ecs_cluster.playercounts_cluster.id
   task_definition = aws_ecs_task_definition.status_consumer_task.arn
@@ -175,6 +224,7 @@ resource "aws_ecs_service" "status_consumer_service" {
 
 # API Gateway service
 resource "aws_ecs_service" "api_gateway_service" {
+  count           = var.enable_ecs_services ? 1 : 0
   name            = "${var.project_name}-api-gateway-service"
   cluster         = aws_ecs_cluster.playercounts_cluster.id
   task_definition = aws_ecs_task_definition.api_gateway_task.arn

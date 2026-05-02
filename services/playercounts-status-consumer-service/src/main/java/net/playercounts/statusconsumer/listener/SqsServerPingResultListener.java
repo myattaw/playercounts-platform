@@ -1,11 +1,11 @@
 package net.playercounts.statusconsumer.listener;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import net.playercounts.contracts.ServerPingResultEvent;
 import net.playercounts.statusconsumer.service.TelemetryEventProcessor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
@@ -31,8 +31,24 @@ public class SqsServerPingResultListener {
         this.telemetryEventProcessor = telemetryEventProcessor;
     }
 
-    @Scheduled(fixedDelay = 3000)
-    public void pollQueue() {
+    @PostConstruct
+    public void startPolling() {
+        Thread worker = new Thread(() -> {
+            while (true) {
+                try {
+                    pollQueue();
+                    Thread.sleep(3000);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        worker.setDaemon(false);
+        worker.start();
+    }
+
+    private void pollQueue() {
         List<Message> messages = sqsClient.receiveMessage(
                 ReceiveMessageRequest.builder()
                         .queueUrl(queueUrl)
@@ -44,6 +60,7 @@ public class SqsServerPingResultListener {
         for (Message message : messages) {
             try {
                 ServerPingResultEvent event = objectMapper.readValue(message.body(), ServerPingResultEvent.class);
+
                 telemetryEventProcessor.process(event);
 
                 sqsClient.deleteMessage(DeleteMessageRequest.builder()
@@ -51,10 +68,11 @@ public class SqsServerPingResultListener {
                         .receiptHandle(message.receiptHandle())
                         .build());
 
+                System.out.println("SQS EVENT PROCESSED -> " + event.getServerAddress());
+
             } catch (Exception e) {
-                System.out.println("SQS MESSAGE PROCESS FAILURE -> " + e.getMessage());
+                e.printStackTrace();
             }
         }
     }
-
 }

@@ -9,3 +9,7 @@ variable "project_name" {
 variable "environment" {
   default = "dev"
 }
+
+variable "enable_ecs_services" {
+  default = true
+}
