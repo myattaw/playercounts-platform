@@ -4,7 +4,18 @@ spring:
     consumer:
       group-id: playercounts-status-consumer-group
       auto-offset-reset: earliest
+
   data:
     redis:
       host: localhost
       port: 6379
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/playercounts
+    username: playercounts
+    password: playercounts
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true

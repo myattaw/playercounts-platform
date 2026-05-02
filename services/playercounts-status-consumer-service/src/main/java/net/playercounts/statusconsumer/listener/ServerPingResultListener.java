@@ -1,6 +1,8 @@
 package net.playercounts.statusconsumer.listener;
 
 import net.playercounts.contracts.ServerPingResultEvent;
+import net.playercounts.models.ServerLatestStatus;
+import net.playercounts.statusconsumer.repository.ServerLatestStatusRepository;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -9,9 +11,12 @@ import org.springframework.stereotype.Component;
 public class ServerPingResultListener {
 
     private final StringRedisTemplate redisTemplate;
+    private final ServerLatestStatusRepository statusRepository;
 
-    public ServerPingResultListener(StringRedisTemplate redisTemplate) {
+    public ServerPingResultListener(StringRedisTemplate redisTemplate,
+                                    ServerLatestStatusRepository statusRepository) {
         this.redisTemplate = redisTemplate;
+        this.statusRepository = statusRepository;
     }
 
     @KafkaListener(topics = "server-ping-results", groupId = "playercounts-status-consumer-group")
@@ -23,6 +28,16 @@ public class ServerPingResultListener {
                 String.valueOf(event.getOnlinePlayers())
         );
 
-        System.out.println("REDIS UPDATED -> live:server:" + event.getServerAddress() + "=" + event.getOnlinePlayers());
+        ServerLatestStatus latestStatus = new ServerLatestStatus(
+                event.getServerAddress(),
+                event.getOnlinePlayers(),
+                event.getMaxPlayers(),
+                event.getTimestamp()
+        );
+
+        statusRepository.save(latestStatus);
+
+        System.out.println("POSTGRES UPSERT COMPLETE -> " + event.getServerAddress());
     }
+
 }
