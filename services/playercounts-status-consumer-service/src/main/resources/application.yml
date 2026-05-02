@@ -4,3 +4,7 @@ spring:
     consumer:
       group-id: playercounts-status-consumer-group
       auto-offset-reset: earliest
+  data:
+    redis:
+      host: localhost
+      port: 6379
