@@ -1,24 +1,29 @@
-package net.playercounts.pollworker.runner;
+package net.playercounts.pollworker.scheduler;
 
 import net.playercounts.contracts.ServerPingResultEvent;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.Random;
+
 @Component
-public class FakePingPublisherRunner implements CommandLineRunner {
+public class FakePingScheduler {
 
     private final KafkaTemplate<String, ServerPingResultEvent> kafkaTemplate;
+    private final Random random = new Random();
 
-    public FakePingPublisherRunner(KafkaTemplate<String, ServerPingResultEvent> kafkaTemplate) {
+    public FakePingScheduler(KafkaTemplate<String, ServerPingResultEvent> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    @Override
-    public void run(String... args) throws Exception {
+    @Scheduled(fixedRate = 5000)
+    public void publishFakePing() {
+        int players = 40000 + random.nextInt(5000);
+
         ServerPingResultEvent event = new ServerPingResultEvent(
                 "hypixel.net",
-                42137,
+                players,
                 200000,
                 System.currentTimeMillis()
         );
@@ -27,4 +32,5 @@ public class FakePingPublisherRunner implements CommandLineRunner {
 
         System.out.println("POLL WORKER SENT EVENT -> " + event);
     }
+
 }
