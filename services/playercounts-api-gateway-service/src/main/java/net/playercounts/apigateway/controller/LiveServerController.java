@@ -2,6 +2,7 @@ package net.playercounts.apigateway.controller;
 
 import net.playercounts.apigateway.repository.ServerLatestStatusRepository;
 import net.playercounts.models.ServerLatestStatus;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +17,9 @@ public class LiveServerController {
     private final StringRedisTemplate redisTemplate;
     private final ServerLatestStatusRepository statusRepository;
 
+    @Value("${playercounts.redis-live-prefix}")
+    private String redisLivePrefix;
+
     public LiveServerController(StringRedisTemplate redisTemplate,
                                 ServerLatestStatusRepository statusRepository) {
         this.redisTemplate = redisTemplate;
@@ -24,7 +28,7 @@ public class LiveServerController {
 
     @GetMapping("/{address}")
     public Map<String, Object> getLiveServer(@PathVariable("address") String address) {
-        String value = redisTemplate.opsForValue().get("live:server:" + address);
+        String value = redisTemplate.opsForValue().get(redisLivePrefix + address);
 
         Map<String, Object> response = new HashMap<>();
         response.put("server", address);

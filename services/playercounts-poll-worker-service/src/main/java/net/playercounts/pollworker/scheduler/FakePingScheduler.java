@@ -4,6 +4,7 @@ import net.playercounts.contracts.ServerPingResultEvent;
 import net.playercounts.pollworker.model.MinecraftPingResult;
 import net.playercounts.pollworker.service.FakeServerRegistryService;
 import net.playercounts.pollworker.service.MinecraftPingService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,12 @@ public class FakePingScheduler {
     private final MinecraftPingService minecraftPingService;
     private final ExecutorService pollWorkerExecutor;
 
+    @Value("${poll-worker.minecraft-default-port}")
+    private int minecraftPort;
+
+    @Value("${poll-worker.kafka-topic}")
+    private String kafkaTopic;
+
     public FakePingScheduler(KafkaTemplate<String, ServerPingResultEvent> kafkaTemplate,
                              FakeServerRegistryService registryService,
                              MinecraftPingService minecraftPingService,
@@ -30,7 +37,7 @@ public class FakePingScheduler {
         this.pollWorkerExecutor = pollWorkerExecutor;
     }
 
-    @Scheduled(fixedRate = 15000)
+    @Scheduled(fixedRateString = "${poll-worker.scheduler-interval-ms}")
     public void publishRealPingBatch() {
         long batchStart = System.currentTimeMillis();
 
@@ -38,7 +45,7 @@ public class FakePingScheduler {
 
         List<CompletableFuture<Void>> futures = servers.stream()
                 .map(serverAddress -> CompletableFuture.runAsync(() -> {
-                    MinecraftPingResult pingResult = minecraftPingService.ping(serverAddress, 25565);
+                    MinecraftPingResult pingResult = minecraftPingService.ping(serverAddress, minecraftPort);
 
                     ServerPingResultEvent event = new ServerPingResultEvent(
                             serverAddress,
@@ -49,7 +56,7 @@ public class FakePingScheduler {
                             System.currentTimeMillis()
                     );
 
-                    kafkaTemplate.send("server-ping-results", serverAddress, event);
+                    kafkaTemplate.send(kafkaTopic, serverAddress, event);
                 }, pollWorkerExecutor))
                 .toList();
 

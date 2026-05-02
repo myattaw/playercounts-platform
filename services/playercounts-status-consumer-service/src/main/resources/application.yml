@@ -1,21 +1,24 @@
 spring:
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
-      group-id: playercounts-status-consumer-group
+      group-id: ${STATUS_CONSUMER_GROUP_ID:playercounts-status-consumer-group}
       auto-offset-reset: earliest
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/playercounts
-    username: playercounts
-    password: playercounts
+    url: ${POSTGRES_JDBC_URL:jdbc:postgresql://localhost:5432/playercounts}
+    username: ${POSTGRES_USERNAME:playercounts}
+    password: ${POSTGRES_PASSWORD:playercounts}
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
+
+status-consumer:
+  kafka-topic: ${STATUS_CONSUMER_KAFKA_TOPIC:server-ping-results}
