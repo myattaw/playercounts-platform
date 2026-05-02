@@ -1,6 +1,7 @@
 package net.playercounts.pollworker.scheduler;
 
 import net.playercounts.contracts.ServerPingResultEvent;
+import net.playercounts.contracts.publisher.TelemetryEventPublisher;
 import net.playercounts.pollworker.model.MinecraftPingResult;
 import net.playercounts.pollworker.service.FakeServerRegistryService;
 import net.playercounts.pollworker.service.MinecraftPingService;
@@ -16,7 +17,7 @@ import java.util.concurrent.ExecutorService;
 @Component
 public class FakePingScheduler {
 
-    private final KafkaTemplate<String, ServerPingResultEvent> kafkaTemplate;
+    private final TelemetryEventPublisher telemetryEventPublisher;
     private final FakeServerRegistryService registryService;
     private final MinecraftPingService minecraftPingService;
     private final ExecutorService pollWorkerExecutor;
@@ -27,11 +28,11 @@ public class FakePingScheduler {
     @Value("${poll-worker.kafka-topic}")
     private String kafkaTopic;
 
-    public FakePingScheduler(KafkaTemplate<String, ServerPingResultEvent> kafkaTemplate,
+    public FakePingScheduler(TelemetryEventPublisher telemetryEventPublisher,
                              FakeServerRegistryService registryService,
                              MinecraftPingService minecraftPingService,
                              ExecutorService pollWorkerExecutor) {
-        this.kafkaTemplate = kafkaTemplate;
+        this.telemetryEventPublisher = telemetryEventPublisher;
         this.registryService = registryService;
         this.minecraftPingService = minecraftPingService;
         this.pollWorkerExecutor = pollWorkerExecutor;
@@ -56,7 +57,8 @@ public class FakePingScheduler {
                             System.currentTimeMillis()
                     );
 
-                    kafkaTemplate.send(kafkaTopic, serverAddress, event);
+                    telemetryEventPublisher.publish(event);
+
                 }, pollWorkerExecutor))
                 .toList();
 
