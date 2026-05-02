@@ -37,7 +37,9 @@ public class ServerPingResultListener {
 
         statusRepository.save(latestStatus);
 
-        System.out.println("POSTGRES UPSERT COMPLETE -> " + event.getServerAddress());
+        System.out.println("STATUS CONSUMER RECEIVED EVENT -> " + event.getServerAddress());
+
+
     }
 
 }
