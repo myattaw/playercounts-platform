@@ -1,6 +1,8 @@
 package net.playercounts.apigateway.controller;
 
+import net.playercounts.apigateway.repository.HistoricalTelemetryRepository;
 import net.playercounts.apigateway.repository.ServerLatestStatusRepository;
+import net.playercounts.models.HistoricalPingPoint;
 import net.playercounts.models.ServerLatestStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -16,14 +18,17 @@ public class LiveServerController {
 
     private final StringRedisTemplate redisTemplate;
     private final ServerLatestStatusRepository statusRepository;
+    private final HistoricalTelemetryRepository historicalTelemetryRepository;
 
     @Value("${playercounts.redis-live-prefix}")
     private String redisLivePrefix;
 
     public LiveServerController(StringRedisTemplate redisTemplate,
-                                ServerLatestStatusRepository statusRepository) {
+                                ServerLatestStatusRepository statusRepository,
+                                HistoricalTelemetryRepository historicalTelemetryRepository) {
         this.redisTemplate = redisTemplate;
         this.statusRepository = statusRepository;
+        this.historicalTelemetryRepository = historicalTelemetryRepository;
     }
 
     @GetMapping("/{address}")
@@ -40,6 +45,11 @@ public class LiveServerController {
     @GetMapping
     public List<ServerLatestStatus> getAllLiveServers() {
         return statusRepository.findAll();
+    }
+
+    @GetMapping("/history/{address}")
+    public List<HistoricalPingPoint> getHistoricalServer(@PathVariable("address") String address) {
+        return historicalTelemetryRepository.getHistory(address);
     }
 
 }

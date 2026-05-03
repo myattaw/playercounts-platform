@@ -34,6 +34,15 @@ services:
     ports:
       - "5432:5432"
 
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.4
+    container_name: playercounts-clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - ./infra/clickhouse-init:/docker-entrypoint-initdb.d
+
   redis:
     image: redis:7
     container_name: playercounts-redis

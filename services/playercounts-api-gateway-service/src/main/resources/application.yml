@@ -21,3 +21,8 @@ spring:
 
 playercounts:
   redis-live-prefix: ${REDIS_LIVE_PREFIX:live:server:}
+
+clickhouse:
+  jdbc-url: jdbc:clickhouse://localhost:8123/default?compress=0
+  username: default
+  password:

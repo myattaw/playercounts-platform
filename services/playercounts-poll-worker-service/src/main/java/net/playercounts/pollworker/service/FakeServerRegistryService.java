@@ -14,11 +14,13 @@ public class FakeServerRegistryService {
                 "cubecraft.net",
                 "manacube.net",
                 "purpleprison.net",
-                "complexmc.net",
+                "hub.mc-complex.com",
                 "performium.net",
-                "insanitycraft.net",
+                "play.insanitycraft.net",
                 "jartexnetwork.com",
-                "snapcraft.net"
+                "snapcraft.net",
+                "play.flowpvp.gg",
+                "mcpvp.com"
         );
     }
 }

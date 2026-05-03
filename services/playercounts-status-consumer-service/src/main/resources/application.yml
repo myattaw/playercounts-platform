@@ -10,7 +10,6 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-
   datasource:
     url: ${POSTGRES_JDBC_URL:jdbc:postgresql://localhost:5432/playercounts}
     username: ${POSTGRES_USERNAME:playercounts}
@@ -28,3 +27,8 @@ cloud:
   sqs:
     queue-url: ${SQS_QUEUE_URL:}
     aws-region: ${AWS_REGION:us-east-1}
+
+clickhouse:
+  jdbc-url: jdbc:clickhouse://localhost:8123/default?compress=0
+  username: default
+  password:
