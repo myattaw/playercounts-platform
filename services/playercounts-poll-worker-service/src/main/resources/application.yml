@@ -2,7 +2,7 @@ spring:
   profiles:
     active: local
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
 poll-worker:
   scheduler-interval-ms: ${POLL_WORKER_INTERVAL_MS:15000}
   thread-pool-size: ${POLL_WORKER_THREAD_POOL_SIZE:25}

@@ -30,6 +30,51 @@ The project was intentionally built as a distributed cloud-native microservice p
 
 ---
 
+## Local Development
+
+Two local development workflows are supported:
+
+### Hybrid IDE Mode (Recommended)
+
+Start only the infrastructure dependencies:
+
+```bash
+docker compose up kafka zookeeper redis postgres
+```
+
+Then run the three Spring Boot services from your IDE using the `local` profile.
+
+### Full Container Mode
+
+Run the entire stack in Docker:
+
+```bash
+docker compose up --build
+```
+
+This starts both infrastructure dependencies and all PlayerCounts application services.
+
+### Infrastructure Dependencies
+
+- Zookeeper
+- Kafka Broker
+- Redis
+- PostgreSQL
+
+### PlayerCounts Application Services
+
+- **Telemetry Producer** (`playercounts-poll-worker-service`)
+- **Telemetry State Processor** (`playercounts-status-consumer-service`)
+- **Public API Gateway** (`playercounts-api-gateway-service`)
+
+### Local API
+
+```text
+http://localhost:8080/servers/live
+```
+
+---
+
 ## Live Distributed Architecture
 
 
@@ -196,36 +241,6 @@ All infrastructure is provisioned reproducibly via Terraform under:
 
 ```text
 infra/terraform
-```
-
----
-
-## Local Development
-
-Run full local stack with Docker Compose:
-
-```bash
-docker compose up --build
-```
-
-This provisions the full local distributed stack, including infrastructure dependencies and PlayerCounts application services.
-
-### Infrastructure Dependencies
-
-- Zookeeper
-- Kafka Broker
-- Redis
-- PostgreSQL
-
-### PlayerCounts Application Services
-
-- **Telemetry Producer** (`playercounts-poll-worker-service`)
-- **Telemetry State Processor** (`playercounts-status-consumer-service`)
-- **Public API Gateway** (`playercounts-api-gateway-service`)
-
-Local API:
-```text
-http://localhost:8080/servers/live
 ```
 
 ---
