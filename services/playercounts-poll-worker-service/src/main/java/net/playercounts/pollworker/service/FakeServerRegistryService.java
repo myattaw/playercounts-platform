@@ -9,6 +9,7 @@ public class FakeServerRegistryService {
 
     public List<String> getTrackedServers() {
         return List.of(
+                "donutsmp.net",
                 "hypixel.net",
                 "mineplex.com",
                 "cubecraft.net",

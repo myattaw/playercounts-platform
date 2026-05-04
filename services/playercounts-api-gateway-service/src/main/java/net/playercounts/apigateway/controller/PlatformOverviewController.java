@@ -1,6 +1,8 @@
 package net.playercounts.apigateway.controller;
 
 import net.playercounts.apigateway.repository.HistoricalTelemetryRepository;
+import net.playercounts.models.snapshot.platform.PlatformDashboardSnapshot;
+import net.playercounts.models.snapshot.platform.PlatformOverviewSnapshot;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,8 +18,19 @@ public class PlatformOverviewController {
     }
 
     @GetMapping("/overview")
-    public net.playercounts.models.snapshot.PlatformOverviewSnapshot getPlatformOverview() {
+    public PlatformOverviewSnapshot getPlatformOverview() {
         return historicalTelemetryRepository.getPlatformOverview();
+    }
+
+    @GetMapping("/dashboard")
+    public PlatformDashboardSnapshot getPlatformDashboard() {
+        return new PlatformDashboardSnapshot(
+                historicalTelemetryRepository.getPlatformOverview(),
+                historicalTelemetryRepository.getTopLiveServers(),
+                historicalTelemetryRepository.getTopPeakServers(),
+                historicalTelemetryRepository.getTopTrendingServers(),
+                historicalTelemetryRepository.getDashboardGraphServers()
+        );
     }
 
 }

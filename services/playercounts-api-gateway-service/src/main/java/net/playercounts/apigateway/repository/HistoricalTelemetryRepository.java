@@ -1,7 +1,9 @@
 package net.playercounts.apigateway.repository;
 
 import net.playercounts.models.HistoricalPingPoint;
-import net.playercounts.models.snapshot.PlatformOverviewSnapshot;
+import net.playercounts.models.snapshot.platform.GraphHistoryPoint;
+import net.playercounts.models.snapshot.platform.GraphServerSnapshot;
+import net.playercounts.models.snapshot.platform.PlatformOverviewSnapshot;
 import net.playercounts.models.snapshot.ServerAnalyticsSnapshot;
 import net.playercounts.models.snapshot.TopServerSnapshot;
 import org.springframework.stereotype.Repository;
@@ -252,6 +254,86 @@ public class HistoricalTelemetryRepository {
         }
 
         return null;
+    }
+
+    public List<GraphServerSnapshot> getDashboardGraphServers() {
+        List<GraphServerSnapshot> servers = new ArrayList<>();
+
+        String[] colors = {
+                "#f59e0b",
+                "#10b981",
+                "#3b82f6",
+                "#8b5cf6",
+                "#ec4899",
+                "#14b8a6",
+                "#f97316",
+                "#06b6d4",
+                "#a855f7",
+                "#84cc16"
+        };
+
+        try {
+            PreparedStatement topStatement = clickHouseConnection.prepareStatement("""
+            SELECT
+                server_address,
+                argMax(online_players, event_timestamp) as current_players,
+                max(online_players) as peak_players
+            FROM server_ping_history
+            GROUP BY server_address
+            ORDER BY peak_players DESC
+            LIMIT 8
+            """);
+
+            ResultSet topRs = topStatement.executeQuery();
+
+            int rank = 1;
+
+            while (topRs.next()) {
+                String address = topRs.getString("server_address");
+                int currentPlayers = topRs.getInt("current_players");
+                int peakPlayers = topRs.getInt("peak_players");
+
+                PreparedStatement historyStatement = clickHouseConnection.prepareStatement("""
+                SELECT
+                    toUnixTimestamp(toStartOfInterval(event_timestamp, INTERVAL 10 MINUTE)) * 1000 as bucket_ts,
+                    avg(online_players) as avg_players
+                FROM server_ping_history
+                WHERE server_address = ?
+                  AND event_timestamp >= now() - INTERVAL 24 HOUR
+                GROUP BY bucket_ts
+                ORDER BY bucket_ts ASC
+                """);
+
+                historyStatement.setString(1, address);
+
+                ResultSet historyRs = historyStatement.executeQuery();
+
+                List<GraphHistoryPoint> history = new ArrayList<>();
+
+                while (historyRs.next()) {
+                    history.add(new GraphHistoryPoint(
+                            historyRs.getLong("bucket_ts"),
+                            (int) Math.round(historyRs.getDouble("avg_players"))
+                    ));
+                }
+
+                servers.add(new GraphServerSnapshot(
+                        address,
+                        currentPlayers,
+                        peakPlayers,
+                        history,
+                        colors[(rank - 1) % colors.length],
+                        rank
+                ));
+
+                rank++;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return servers;
     }
 
 }

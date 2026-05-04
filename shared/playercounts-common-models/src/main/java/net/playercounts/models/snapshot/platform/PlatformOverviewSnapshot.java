@@ -1,4 +1,4 @@
-package net.playercounts.models.snapshot;
+package net.playercounts.models.snapshot.platform;
 
 public record PlatformOverviewSnapshot(
         int trackedServers,
