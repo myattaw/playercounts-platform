@@ -95,14 +95,20 @@ graph TD
 
     G --> H["playercounts-status-consumer-service<br/>Telemetry State Processor"]
 
-    H --> I[("PostgreSQL RDS")]
-    H --> J[("Redis ElastiCache")]
+    H --> I[("PostgreSQL<br/>Latest Durable State")]
+    H --> J[("Redis<br/>Live Cache")]
+    H --> N[("ClickHouse<br/>Historical Telemetry Warehouse")]
 
     I --> K["playercounts-api-gateway-service"]
     J --> K
+    N --> K
 
-    K --> L["AWS Application Load Balancer"]
-    L --> M["GET /servers/live"]
+    K --> L["REST Analytics API"]
+
+    L --> M["/servers/live"]
+    L --> O["/servers/live/history/{address}"]
+    L --> P["/servers/live/stats/{address}"]
+    L --> Q["/servers/live/top/*"]
 ```
 
 ---
