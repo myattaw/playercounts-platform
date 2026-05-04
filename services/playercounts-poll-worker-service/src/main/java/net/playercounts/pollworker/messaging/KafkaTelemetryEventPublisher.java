@@ -22,6 +22,6 @@ public class KafkaTelemetryEventPublisher implements TelemetryEventPublisher {
 
     @Override
     public void publish(ServerPingResultEvent event) {
-        kafkaTemplate.send(kafkaTopic, event.getServerAddress(), event);
+        kafkaTemplate.send(kafkaTopic, event.serverAddress(), event);
     }
 }

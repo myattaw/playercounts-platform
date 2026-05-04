@@ -68,7 +68,7 @@ public class SqsServerPingResultListener {
                         .receiptHandle(message.receiptHandle())
                         .build());
 
-                System.out.println("SQS EVENT PROCESSED -> " + event.getServerAddress());
+                System.out.println("SQS EVENT PROCESSED -> " + event.serverAddress());
 
             } catch (Exception e) {
                 e.printStackTrace();

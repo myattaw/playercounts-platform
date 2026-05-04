@@ -26,18 +26,26 @@ public class TelemetryEventProcessor {
 
     public void process(ServerPingResultEvent event) {
 
+
         redisTemplate.opsForValue().set(
-                "live:server:" + event.getServerAddress(),
-                String.valueOf(event.getOnlinePlayers())
+                "live:server:" + event.serverAddress(),
+                String.valueOf(event.onlinePlayers())
         );
 
+        if (event.iconBase64() != null && !event.iconBase64().isBlank()) {
+            redisTemplate.opsForValue().set(
+                    "icon:server:" + event.serverAddress(),
+                    event.iconBase64()
+            );
+        }
+
         ServerLatestStatus latestStatus = new ServerLatestStatus(
-                event.getServerAddress(),
-                event.getOnlinePlayers(),
-                event.getMaxPlayers(),
-                event.getLatencyMs(),
-                event.isOnline(),
-                event.getTimestamp()
+                event.serverAddress(),
+                event.onlinePlayers(),
+                event.maxPlayers(),
+                event.latencyMs(),
+                event.online(),
+                event.timestamp()
         );
 
         statusRepository.save(latestStatus);

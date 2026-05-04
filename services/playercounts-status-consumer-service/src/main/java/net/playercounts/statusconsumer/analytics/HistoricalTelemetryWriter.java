@@ -24,12 +24,12 @@ public class HistoricalTelemetryWriter {
                     VALUES (?, ?, ?, ?, ?, ?)
                     """);
 
-            statement.setString(1, event.getServerAddress());
-            statement.setInt(2, event.getOnlinePlayers());
-            statement.setInt(3, event.getMaxPlayers());
-            statement.setLong(4, event.getLatencyMs());
-            statement.setBoolean(5, event.isOnline());
-            statement.setTimestamp(6, new Timestamp(event.getTimestamp()));
+            statement.setString(1, event.serverAddress());
+            statement.setInt(2, event.onlinePlayers());
+            statement.setInt(3, event.maxPlayers());
+            statement.setLong(4, event.latencyMs());
+            statement.setBoolean(5, event.online());
+            statement.setTimestamp(6, new Timestamp(event.timestamp()));
 
             statement.executeUpdate();
 

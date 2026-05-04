@@ -51,11 +51,13 @@ public class MinecraftPingService {
                                 max = playerInfo.getMaxPlayers();
                             }
 
+                            byte[] serverIcon = info.getIconPng();
+
                             long latency = System.currentTimeMillis() - start;
 
-                            future.complete(new MinecraftPingResult(true, online, max, latency));
+                            future.complete(new MinecraftPingResult(true, online, max, latency,  serverIcon));
                         } catch (Exception e) {
-                            future.complete(new MinecraftPingResult(false, 0, 0, -1));
+                            future.complete(new MinecraftPingResult(false, 0, 0, -1, null));
                         } finally {
                             session.disconnect("Ping complete");
                         }
@@ -65,7 +67,7 @@ public class MinecraftPingService {
                 @Override
                 public void disconnected(DisconnectedEvent event) {
                     if (!future.isDone()) {
-                        future.complete(new MinecraftPingResult(false, 0, 0, -1));
+                        future.complete(new MinecraftPingResult(false, 0, 0, -1, null));
                     }
                 }
             });
@@ -75,7 +77,7 @@ public class MinecraftPingService {
             return future.get(6, TimeUnit.SECONDS);
 
         } catch (Exception e) {
-            return new MinecraftPingResult(false, 0, 0, -1);
+            return new MinecraftPingResult(false, 0, 0, -1, null);
         }
     }
 }

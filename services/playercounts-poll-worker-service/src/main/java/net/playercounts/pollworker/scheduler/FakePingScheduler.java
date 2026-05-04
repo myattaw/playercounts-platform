@@ -50,10 +50,11 @@ public class FakePingScheduler {
 
                     ServerPingResultEvent event = new ServerPingResultEvent(
                             serverAddress,
-                            pingResult.getOnlinePlayers(),
-                            pingResult.getMaxPlayers(),
-                            pingResult.getLatencyMs(),
-                            pingResult.isOnline(),
+                            pingResult.onlinePlayers(),
+                            pingResult.maxPlayers(),
+                            pingResult.latencyMs(),
+                            pingResult.online(),
+                            pingResult.icon() != null ? java.util.Base64.getEncoder().encodeToString(pingResult.icon()) : null,
                             System.currentTimeMillis()
                     );
 

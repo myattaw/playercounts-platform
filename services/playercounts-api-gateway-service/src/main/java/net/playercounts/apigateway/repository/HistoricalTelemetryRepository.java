@@ -6,6 +6,7 @@ import net.playercounts.models.snapshot.platform.GraphServerSnapshot;
 import net.playercounts.models.snapshot.platform.PlatformOverviewSnapshot;
 import net.playercounts.models.snapshot.ServerAnalyticsSnapshot;
 import net.playercounts.models.snapshot.TopServerSnapshot;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
@@ -18,9 +19,12 @@ import java.util.List;
 public class HistoricalTelemetryRepository {
 
     private final Connection clickHouseConnection;
+    private final StringRedisTemplate redisTemplate;
 
-    public HistoricalTelemetryRepository(Connection clickHouseConnection) {
+    public HistoricalTelemetryRepository(Connection clickHouseConnection,
+                                         StringRedisTemplate redisTemplate) {
         this.clickHouseConnection = clickHouseConnection;
+        this.redisTemplate = redisTemplate;
     }
 
     public List<HistoricalPingPoint> getHistory(String address) {
@@ -317,13 +321,16 @@ public class HistoricalTelemetryRepository {
                     ));
                 }
 
+                String iconBase64 = redisTemplate.opsForValue().get("icon:server:" + address);
+
                 servers.add(new GraphServerSnapshot(
                         address,
                         currentPlayers,
                         peakPlayers,
                         history,
                         colors[(rank - 1) % colors.length],
-                        rank
+                        rank,
+                        iconBase64
                 ));
 
                 rank++;
