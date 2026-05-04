@@ -1,6 +1,7 @@
 package net.playercounts.apigateway.repository;
 
 import net.playercounts.models.HistoricalPingPoint;
+import net.playercounts.models.snapshot.PlatformOverviewSnapshot;
 import net.playercounts.models.snapshot.ServerAnalyticsSnapshot;
 import net.playercounts.models.snapshot.TopServerSnapshot;
 import org.springframework.stereotype.Repository;
@@ -194,6 +195,63 @@ public class HistoricalTelemetryRepository {
         }
 
         return results;
+    }
+
+    public PlatformOverviewSnapshot getPlatformOverview() {
+        try {
+            PreparedStatement statement = clickHouseConnection.prepareStatement("""
+                SELECT
+                    countDistinct(server_address) as tracked_servers,
+                    sum(current_players) as total_current_players,
+                    avg(current_players) as avg_current_players,
+                    argMax(server_address, current_players) as largest_server,
+                    max(current_players) as largest_server_players
+                FROM
+                (
+                    SELECT
+                        server_address,
+                        argMax(online_players, event_timestamp) as current_players
+                    FROM server_ping_history
+                    GROUP BY server_address
+                )
+                """);
+
+            ResultSet rs = statement.executeQuery();
+
+            if (rs.next()) {
+                int trackedServers = rs.getInt("tracked_servers");
+                int totalCurrentPlayers = rs.getInt("total_current_players");
+                double avgCurrentPlayers = rs.getDouble("avg_current_players");
+                String largestServer = rs.getString("largest_server");
+                int largestServerPlayers = rs.getInt("largest_server_players");
+
+                PreparedStatement countStatement = clickHouseConnection.prepareStatement("""
+                    SELECT count() as total_points
+                    FROM server_ping_history
+                    """);
+
+                ResultSet countRs = countStatement.executeQuery();
+                long totalPoints = 0;
+
+                if (countRs.next()) {
+                    totalPoints = countRs.getLong("total_points");
+                }
+
+                return new PlatformOverviewSnapshot(
+                        trackedServers,
+                        totalCurrentPlayers,
+                        (int) Math.round(avgCurrentPlayers),
+                        totalPoints,
+                        largestServer,
+                        largestServerPlayers
+                );
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
 }

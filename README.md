@@ -95,9 +95,9 @@ graph TD
 
     G --> H["playercounts-status-consumer-service<br/>Telemetry State Processor"]
 
-    H --> I[("PostgreSQL<br/>Latest Durable State")]
-    H --> J[("Redis<br/>Live Cache")]
-    H --> N[("ClickHouse<br/>Historical Telemetry Warehouse")]
+    H --> I[("<br>PostgreSQL<br/>Latest Durable State")]
+    H --> J[("<br>Redis<br/>Live Cache")]
+    H --> N[("<br>ClickHouse<br/>Historical Telemetry Warehouse")]
 
     I --> K["playercounts-api-gateway-service"]
     J --> K
