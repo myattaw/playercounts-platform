@@ -1,4 +1,4 @@
-package net.playercounts.models.snapshot.platform;
+package net.playercounts.models.snapshot.graph;
 
 import java.util.List;
 
