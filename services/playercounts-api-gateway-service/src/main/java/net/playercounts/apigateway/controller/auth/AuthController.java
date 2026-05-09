@@ -1,11 +1,10 @@
 package net.playercounts.apigateway.controller.auth;
 
+import net.playercounts.apigateway.dto.request.LoginRequest;
+import net.playercounts.apigateway.dto.response.LoginResponse;
 import net.playercounts.apigateway.service.auth.AuthService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/auth")
@@ -24,8 +23,8 @@ public class AuthController {
      */
 
     @PostMapping("/login")
-    public ResponseEntity<?> login() {
-        return ResponseEntity.ok("login");
+    public LoginResponse login(@RequestBody LoginRequest request) {
+        return authService.login(request);
     }
 
     @PostMapping("/logout")

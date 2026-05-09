@@ -26,3 +26,8 @@ clickhouse:
   jdbc-url: jdbc:clickhouse://localhost:8123/default?compress=0
   username: default
   password:
+
+security:
+  jwt:
+    secret: your-super-long-secret-key-change-this-in-production
+    expiration-ms: 86400000
