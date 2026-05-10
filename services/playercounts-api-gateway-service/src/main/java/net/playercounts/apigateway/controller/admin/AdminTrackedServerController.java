@@ -15,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/admin/servers")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasRole('ROLE_ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminTrackedServerController {
 
     private final AdminTrackedServerService trackedServerService;
@@ -44,7 +44,7 @@ public class AdminTrackedServerController {
     @Operation(summary = "Get tracked server by ID")
     @GetMapping("/{id}")
     public TrackedServerResponse getServer(
-            @PathVariable Long id
+            @PathVariable("id") Long id
     ) {
         return trackedServerService.getServer(id);
     }
@@ -52,7 +52,7 @@ public class AdminTrackedServerController {
     @Operation(summary = "Update tracked server metadata")
     @PutMapping("/{id}")
     public TrackedServerResponse updateServer(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody UpdateTrackedServerRequest request
     ) {
         return trackedServerService.updateServer(id, request);
@@ -61,7 +61,7 @@ public class AdminTrackedServerController {
     @Operation(summary = "Enable or disable tracked server")
     @PatchMapping("/{id}/active")
     public TrackedServerResponse updateServerActiveState(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestParam boolean active
     ) {
         return trackedServerService.updateServerActiveState(id, active);
@@ -70,7 +70,7 @@ public class AdminTrackedServerController {
     @Operation(summary = "Refresh server metadata and icon")
     @PostMapping("/{id}/refresh")
     public TrackedServerResponse refreshServer(
-            @PathVariable Long id
+            @PathVariable("id") Long id
     ) {
         return trackedServerService.refreshServer(id);
     }
@@ -79,7 +79,7 @@ public class AdminTrackedServerController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteServer(
-            @PathVariable Long id
+            @PathVariable("id") Long id
     ) {
         trackedServerService.deleteServer(id);
     }
