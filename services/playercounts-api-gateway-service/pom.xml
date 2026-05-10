@@ -21,7 +21,7 @@
 
         <dependency>
             <groupId>net.playercounts</groupId>
-            <artifactId>playercounts-common-models</artifactId>
+            <artifactId>playercounts-common</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -92,6 +92,13 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.5.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <optional>true</optional>
         </dependency>
 
     </dependencies>

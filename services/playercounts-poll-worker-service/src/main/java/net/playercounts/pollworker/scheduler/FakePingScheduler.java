@@ -2,11 +2,10 @@ package net.playercounts.pollworker.scheduler;
 
 import net.playercounts.contracts.ServerPingResultEvent;
 import net.playercounts.contracts.publisher.TelemetryEventPublisher;
-import net.playercounts.pollworker.model.MinecraftPingResult;
+import net.playercounts.models.MinecraftPingResult;
 import net.playercounts.pollworker.service.FakeServerRegistryService;
-import net.playercounts.pollworker.service.MinecraftPingService;
+import net.playercounts.service.MinecraftPingService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 

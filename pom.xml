@@ -10,6 +10,8 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+
+
     <name>playercounts-platform</name>
     <description>Distributed telemetry and analytics platform powering playercounts.net</description>
 
@@ -18,7 +20,7 @@
     <!-- ========================= -->
     <modules>
         <!-- shared -->
-        <module>shared/playercounts-common-models</module>
+        <module>shared/playercounts-common</module>
         <module>shared/playercounts-kafka-contracts</module>
 
         <!-- services -->
@@ -35,6 +37,8 @@
         <spring.boot.version>3.3.0</spring.boot.version>
         <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <lombok.version>1.18.38</lombok.version>
+
     </properties>
 
     <!-- ========================= -->

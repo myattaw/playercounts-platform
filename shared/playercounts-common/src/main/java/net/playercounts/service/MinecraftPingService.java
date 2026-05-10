@@ -1,6 +1,6 @@
-package net.playercounts.pollworker.service;
+package net.playercounts.service;
 
-import net.playercounts.pollworker.model.MinecraftPingResult;
+import net.playercounts.models.MinecraftPingResult;
 import org.geysermc.mcprotocollib.network.BuiltinFlags;
 import org.geysermc.mcprotocollib.network.Session;
 import org.geysermc.mcprotocollib.network.event.session.DisconnectedEvent;
@@ -12,12 +12,10 @@ import org.geysermc.mcprotocollib.protocol.MinecraftProtocol;
 import org.geysermc.mcprotocollib.protocol.data.status.PlayerInfo;
 import org.geysermc.mcprotocollib.protocol.data.status.ServerStatusInfo;
 import org.geysermc.mcprotocollib.protocol.packet.status.clientbound.ClientboundStatusResponsePacket;
-import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-@Service
 public class MinecraftPingService {
 
     public MinecraftPingResult ping(String host, int port) {
@@ -80,4 +78,5 @@ public class MinecraftPingService {
             return new MinecraftPingResult(false, 0, 0, -1, null);
         }
     }
+
 }

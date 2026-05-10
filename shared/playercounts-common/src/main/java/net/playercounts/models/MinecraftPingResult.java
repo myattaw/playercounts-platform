@@ -1,4 +1,4 @@
-package net.playercounts.pollworker.model;
+package net.playercounts.models;
 
 public record MinecraftPingResult(
         boolean online,
