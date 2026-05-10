@@ -1,0 +1,42 @@
+### Login as admin
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "password"
+}
+
+> {%
+    client.global.set(
+        "auth_token",
+        response.body.token
+    );
+%}
+
+### Get servers BEFORE
+GET http://localhost:8080/admin/servers
+Authorization: Bearer {{auth_token}}
+
+### Create DonutSMP
+POST http://localhost:8080/admin/servers
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "address": "donutsmp.net",
+  "displayName": "DonutSMP",
+  "tags": ["PvP"]
+}
+
+### Get servers AFTER CREATE
+GET http://localhost:8080/admin/servers
+Authorization: Bearer {{auth_token}}
+
+### Delete DonutSMP (replace ID if needed)
+DELETE http://localhost:8080/admin/servers/1
+Authorization: Bearer {{auth_token}}
+
+### Get servers AFTER DELETE
+GET http://localhost:8080/admin/servers
+Authorization: Bearer {{auth_token}}

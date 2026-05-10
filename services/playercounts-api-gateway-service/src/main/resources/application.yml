@@ -31,3 +31,7 @@ security:
   jwt:
     secret: your-super-long-secret-key-change-this-in-production
     expiration-ms: 86400000
+
+logging:
+  level:
+    org.springframework.security: DEBUG

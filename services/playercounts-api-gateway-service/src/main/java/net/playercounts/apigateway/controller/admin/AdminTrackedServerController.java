@@ -7,6 +7,7 @@ import net.playercounts.apigateway.dto.request.UpdateTrackedServerRequest;
 import net.playercounts.apigateway.dto.response.TrackedServerResponse;
 import net.playercounts.apigateway.service.admin.AdminTrackedServerService;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/admin/servers")
 @SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasRole('ROLE_ADMIN')")
 public class AdminTrackedServerController {
 
     private final AdminTrackedServerService trackedServerService;

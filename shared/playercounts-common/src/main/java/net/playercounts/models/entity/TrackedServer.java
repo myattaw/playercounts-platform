@@ -38,7 +38,7 @@ public class TrackedServer {
     @Column(nullable = false)
     private String color;
 
-    @Lob
+    @Column(columnDefinition = "BYTEA")
     private byte[] icon;
 
     @Column(nullable = false)
