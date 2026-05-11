@@ -6,7 +6,7 @@ public record TrackedServerResponse(
         Long id,
         String address,
         String displayName,
-        List<String> tags,
+        List<TagResponse> tags,
         String graphColor,
         boolean active
 ) {

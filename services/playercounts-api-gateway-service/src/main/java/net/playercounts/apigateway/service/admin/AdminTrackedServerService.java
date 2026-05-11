@@ -2,11 +2,18 @@ package net.playercounts.apigateway.service.admin;
 
 import net.playercounts.apigateway.dto.request.CreateTrackedServerRequest;
 import net.playercounts.apigateway.dto.request.UpdateTrackedServerRequest;
+import net.playercounts.apigateway.dto.response.TagResponse;
 import net.playercounts.apigateway.dto.response.TrackedServerResponse;
-import net.playercounts.apigateway.repository.TrackedServerRepository;
+
+import net.playercounts.apigateway.repository.admin.TagRepository;
+import net.playercounts.apigateway.repository.admin.TrackedServerRepository;
+
 import net.playercounts.models.MinecraftPingResult;
+import net.playercounts.models.entity.ServerTag;
 import net.playercounts.models.entity.TrackedServer;
+
 import net.playercounts.service.MinecraftPingService;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,26 +22,37 @@ import java.util.List;
 public class AdminTrackedServerService {
 
     private final TrackedServerRepository trackedServerRepository;
+    private final TagRepository tagRepository;
     private final MinecraftPingService minecraftPingService;
 
     public AdminTrackedServerService(
             TrackedServerRepository trackedServerRepository,
+            TagRepository tagRepository,
             MinecraftPingService minecraftPingService
     ) {
-        this.trackedServerRepository = trackedServerRepository;
-        this.minecraftPingService = minecraftPingService;
+
+        this.trackedServerRepository =
+                trackedServerRepository;
+
+        this.tagRepository =
+                tagRepository;
+
+        this.minecraftPingService =
+                minecraftPingService;
     }
 
     public TrackedServerResponse createServer(
             CreateTrackedServerRequest request
     ) {
 
-        trackedServerRepository.findByAddress(request.address())
-                .ifPresent(server -> {
-                    throw new IllegalStateException(
-                            "Server already exists"
-                    );
-                });
+        trackedServerRepository.findByAddress(
+                request.address()
+        ).ifPresent(server -> {
+
+            throw new IllegalStateException(
+                    "Server already exists"
+            );
+        });
 
         MinecraftPingResult pingResult =
                 minecraftPingService.ping(
@@ -43,25 +61,54 @@ public class AdminTrackedServerService {
                 );
 
         if (!pingResult.online()) {
+
             throw new IllegalStateException(
                     "Server could not be reached"
             );
         }
 
-        String graphColor = generateDefaultColor();
+        List<ServerTag> tags =
+                tagRepository.findAllById(
+                        request.tagIds()
+                );
 
-        TrackedServer trackedServer = new TrackedServer();
+        String graphColor =
+                generateDefaultColor();
 
-        trackedServer.setAddress(request.address());
-        trackedServer.setDisplayName(request.displayName());
-        trackedServer.setTags(request.tags());
-        trackedServer.setColor(graphColor);
-        trackedServer.setIcon(pingResult.icon());
+        TrackedServer trackedServer =
+                new TrackedServer();
+
+        trackedServer.setAddress(
+                request.address()
+        );
+
+        trackedServer.setDisplayName(
+                request.displayName()
+        );
+
+        trackedServer.setTags(tags);
+
+        trackedServer.setColor(
+                graphColor
+        );
+
+        trackedServer.setIcon(
+                pingResult.icon()
+        );
+
         trackedServer.setActive(true);
-        trackedServer.setCreatedAt(System.currentTimeMillis());
-        trackedServer.setUpdatedAt(System.currentTimeMillis());
 
-        trackedServerRepository.save(trackedServer);
+        trackedServer.setCreatedAt(
+                System.currentTimeMillis()
+        );
+
+        trackedServer.setUpdatedAt(
+                System.currentTimeMillis()
+        );
+
+        trackedServerRepository.save(
+                trackedServer
+        );
 
         return mapResponse(trackedServer);
     }
@@ -74,13 +121,12 @@ public class AdminTrackedServerService {
                 .toList();
     }
 
-    public TrackedServerResponse getServer(Long id) {
+    public TrackedServerResponse getServer(
+            Long id
+    ) {
 
         TrackedServer trackedServer =
-                trackedServerRepository.findById(id)
-                        .orElseThrow(() -> new IllegalStateException(
-                                "Tracked server not found"
-                        ));
+                getTrackedServerOrThrow(id);
 
         return mapResponse(trackedServer);
     }
@@ -91,18 +137,34 @@ public class AdminTrackedServerService {
     ) {
 
         TrackedServer trackedServer =
-                trackedServerRepository.findById(id)
-                        .orElseThrow(() -> new IllegalStateException(
-                                "Tracked server not found"
-                        ));
+                getTrackedServerOrThrow(id);
 
-        trackedServer.setDisplayName(request.displayName());
-        trackedServer.setTags(request.tags());
-        trackedServer.setColor(request.graphColor());
-        trackedServer.setActive(request.active());
-        trackedServer.setUpdatedAt(System.currentTimeMillis());
+        List<ServerTag> tags =
+                tagRepository.findAllById(
+                        request.tagIds()
+                );
 
-        trackedServerRepository.save(trackedServer);
+        trackedServer.setDisplayName(
+                request.displayName()
+        );
+
+        trackedServer.setTags(tags);
+
+        trackedServer.setColor(
+                request.graphColor()
+        );
+
+        trackedServer.setActive(
+                request.active()
+        );
+
+        trackedServer.setUpdatedAt(
+                System.currentTimeMillis()
+        );
+
+        trackedServerRepository.save(
+                trackedServer
+        );
 
         return mapResponse(trackedServer);
     }
@@ -113,26 +175,27 @@ public class AdminTrackedServerService {
     ) {
 
         TrackedServer trackedServer =
-                trackedServerRepository.findById(id)
-                        .orElseThrow(() -> new IllegalStateException(
-                                "Tracked server not found"
-                        ));
+                getTrackedServerOrThrow(id);
 
         trackedServer.setActive(active);
-        trackedServer.setUpdatedAt(System.currentTimeMillis());
 
-        trackedServerRepository.save(trackedServer);
+        trackedServer.setUpdatedAt(
+                System.currentTimeMillis()
+        );
+
+        trackedServerRepository.save(
+                trackedServer
+        );
 
         return mapResponse(trackedServer);
     }
 
-    public TrackedServerResponse refreshServer(Long id) {
+    public TrackedServerResponse refreshServer(
+            Long id
+    ) {
 
         TrackedServer trackedServer =
-                trackedServerRepository.findById(id)
-                        .orElseThrow(() -> new IllegalStateException(
-                                "Tracked server not found"
-                        ));
+                getTrackedServerOrThrow(id);
 
         MinecraftPingResult pingResult =
                 minecraftPingService.ping(
@@ -141,15 +204,23 @@ public class AdminTrackedServerService {
                 );
 
         if (!pingResult.online()) {
+
             throw new IllegalStateException(
                     "Server could not be reached"
             );
         }
 
-        trackedServer.setIcon(pingResult.icon());
-        trackedServer.setUpdatedAt(System.currentTimeMillis());
+        trackedServer.setIcon(
+                pingResult.icon()
+        );
 
-        trackedServerRepository.save(trackedServer);
+        trackedServer.setUpdatedAt(
+                System.currentTimeMillis()
+        );
+
+        trackedServerRepository.save(
+                trackedServer
+        );
 
         return mapResponse(trackedServer);
     }
@@ -157,6 +228,7 @@ public class AdminTrackedServerService {
     public void deleteServer(Long id) {
 
         if (!trackedServerRepository.existsById(id)) {
+
             throw new IllegalStateException(
                     "Tracked server not found"
             );
@@ -165,15 +237,38 @@ public class AdminTrackedServerService {
         trackedServerRepository.deleteById(id);
     }
 
+    private TrackedServer getTrackedServerOrThrow(
+            Long id
+    ) {
+
+        return trackedServerRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "Tracked server not found"
+                        )
+                );
+    }
+
     private TrackedServerResponse mapResponse(
             TrackedServer trackedServer
     ) {
+
+        List<TagResponse> tags =
+                trackedServer.getTags()
+                        .stream()
+                        .map(tag -> new TagResponse(
+                                tag.getId(),
+                                tag.getName(),
+                                tag.getColor(),
+                                tag.getCreatedAt()
+                        ))
+                        .toList();
 
         return new TrackedServerResponse(
                 trackedServer.getId(),
                 trackedServer.getAddress(),
                 trackedServer.getDisplayName(),
-                trackedServer.getTags(),
+                tags,
                 trackedServer.getColor(),
                 trackedServer.isActive()
         );
@@ -193,10 +288,10 @@ public class AdminTrackedServerService {
         };
 
         int index = (int) (
-                System.currentTimeMillis() % colors.length
+                System.currentTimeMillis()
+                        % colors.length
         );
 
         return colors[index];
     }
-
 }

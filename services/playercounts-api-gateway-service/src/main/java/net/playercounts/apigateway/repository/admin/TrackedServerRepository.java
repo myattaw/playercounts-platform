@@ -1,4 +1,4 @@
-package net.playercounts.apigateway.repository;
+package net.playercounts.apigateway.repository.admin;
 
 import net.playercounts.models.entity.TrackedServer;
 import org.springframework.data.jpa.repository.JpaRepository;

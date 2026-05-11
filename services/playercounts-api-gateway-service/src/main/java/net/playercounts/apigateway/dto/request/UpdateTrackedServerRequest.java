@@ -4,7 +4,7 @@ import java.util.List;
 
 public record UpdateTrackedServerRequest(
         String displayName,
-        List<String> tags,
+        List<Long> tagIds,
         String graphColor,
         boolean active
 ) {

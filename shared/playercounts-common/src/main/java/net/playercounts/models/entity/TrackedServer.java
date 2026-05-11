@@ -27,13 +27,13 @@ public class TrackedServer {
     @Column(nullable = false)
     private String displayName;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(
-            name = "tracked_server_tags",
-            joinColumns = @JoinColumn(name = "server_id")
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "tracked_server_tag_map",
+            joinColumns = @JoinColumn(name = "server_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
-    @Column(name = "tag")
-    private List<String> tags = new ArrayList<>();
+    private List<ServerTag> tags = new ArrayList<>();
 
     @Column(nullable = false)
     private String color;
