@@ -52,7 +52,7 @@ public class AdminTagController {
     @Operation(summary = "Get tag by ID")
     @GetMapping("/{id}")
     public TagResponse getTag(
-            @PathVariable Long id
+            @PathVariable("id") Long id
     ) {
 
         return adminTagService.getTag(id);
@@ -61,7 +61,7 @@ public class AdminTagController {
     @Operation(summary = "Update tag")
     @PutMapping("/{id}")
     public TagResponse updateTag(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody UpdateTagRequest request
     ) {
 
@@ -75,7 +75,7 @@ public class AdminTagController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteTag(
-            @PathVariable Long id
+            @PathVariable("id") Long id
     ) {
 
         adminTagService.deleteTag(id);
