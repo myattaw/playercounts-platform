@@ -1,0 +1,165 @@
+### Login
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "password"
+}
+
+> {%
+    client.global.set(
+        "auth_token",
+        response.body.token
+    );
+%}
+
+###
+
+### Create Survival Tag
+POST http://localhost:8080/admin/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "Survival",
+  "color": "#22c55e"
+}
+
+###
+
+### Create Bedrock Tag
+POST http://localhost:8080/admin/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "Bedrock",
+  "color": "#06b6d4"
+}
+
+###
+
+### Create Java Tag
+POST http://localhost:8080/admin/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "Java",
+  "color": "#3b82f6"
+}
+
+###
+
+### Create Skyblock Tag
+POST http://localhost:8080/admin/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "Skyblock",
+  "color": "#8b5cf6"
+}
+
+###
+
+### Create PvP Tag
+POST http://localhost:8080/admin/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "PvP",
+  "color": "#ec4899"
+}
+
+###
+
+### Create Prison Tag
+POST http://localhost:8080/admin/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "Prison",
+  "color": "#ef4444"
+}
+
+###
+
+### Create Minigames Tag
+POST http://localhost:8080/admin/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "Minigames",
+  "color": "#f97316"
+}
+
+###
+
+### Create SMP Tag
+POST http://localhost:8080/admin/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "SMP",
+  "color": "#eab308"
+}
+
+###
+
+### Create Modded Tag
+POST http://localhost:8080/admin/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "Modded",
+  "color": "#22c55e"
+}
+
+###
+
+### Create Cobblemon Tag
+POST http://localhost:8080/admin/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "Cobblemon",
+  "color": "#06b6d4"
+}
+
+###
+
+### Create Oneblock Tag
+POST http://localhost:8080/admin/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "Oneblock",
+  "color": "#3b82f6"
+}
+
+###
+
+### Create Cracked Tag
+POST http://localhost:8080/admin/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "Cracked",
+  "color": "#8b5cf6"
+}
+
+###
+
+### Get All Tags
+GET http://localhost:8080/admin/tags
+Authorization: Bearer {{auth_token}}

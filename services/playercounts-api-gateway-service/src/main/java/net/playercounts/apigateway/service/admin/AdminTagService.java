@@ -2,13 +2,9 @@ package net.playercounts.apigateway.service.admin;
 
 import net.playercounts.apigateway.dto.request.CreateTagRequest;
 import net.playercounts.apigateway.dto.request.UpdateTagRequest;
-
 import net.playercounts.apigateway.dto.response.TagResponse;
-
 import net.playercounts.apigateway.repository.admin.TagRepository;
-
 import net.playercounts.models.entity.ServerTag;
-
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -39,17 +35,9 @@ public class AdminTagService {
 
         ServerTag tag = new ServerTag();
 
-        tag.setName(
-                request.name()
-        );
-
-        tag.setColor(
-                request.color()
-        );
-
-        tag.setCreatedAt(
-                System.currentTimeMillis()
-        );
+        tag.setName(request.name());
+        tag.setColor(request.color());
+        tag.setCreatedAt(System.currentTimeMillis());
 
         ServerTag savedTag =
                 tagRepository.save(tag);
@@ -68,9 +56,7 @@ public class AdminTagService {
     public TagResponse getTag(
             Long id
     ) {
-
-        ServerTag tag =
-                getTagOrThrow(id);
+        ServerTag tag = getTagOrThrow(id);
 
         return mapResponse(tag);
     }
@@ -80,19 +66,12 @@ public class AdminTagService {
             UpdateTagRequest request
     ) {
 
-        ServerTag tag =
-                getTagOrThrow(id);
+        ServerTag tag = getTagOrThrow(id);
 
-        tag.setName(
-                request.name()
-        );
+        tag.setName(request.name());
+        tag.setColor(request.color());
 
-        tag.setColor(
-                request.color()
-        );
-
-        ServerTag updatedTag =
-                tagRepository.save(tag);
+        ServerTag updatedTag = tagRepository.save(tag);
 
         return mapResponse(updatedTag);
     }
