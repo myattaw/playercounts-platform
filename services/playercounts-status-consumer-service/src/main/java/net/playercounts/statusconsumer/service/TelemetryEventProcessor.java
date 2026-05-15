@@ -2,6 +2,7 @@ package net.playercounts.statusconsumer.service;
 
 import net.playercounts.contracts.ServerPingResultEvent;
 import net.playercounts.models.ServerLatestStatus;
+import net.playercounts.models.repository.TrackedServerRepository;
 import net.playercounts.statusconsumer.analytics.HistoricalTelemetryWriter;
 import net.playercounts.statusconsumer.repository.ServerLatestStatusRepository;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -13,19 +14,20 @@ public class TelemetryEventProcessor {
     private final StringRedisTemplate redisTemplate;
     private final ServerLatestStatusRepository statusRepository;
     private final HistoricalTelemetryWriter historicalTelemetryWriter;
+    private final TrackedServerRepository trackedServerRepository;
 
     private int processedCounter = 0;
     private long lastLogTime = System.currentTimeMillis();
 
     public TelemetryEventProcessor(StringRedisTemplate redisTemplate,
-                                   ServerLatestStatusRepository statusRepository, HistoricalTelemetryWriter historicalTelemetryWriter) {
+                                   ServerLatestStatusRepository statusRepository, HistoricalTelemetryWriter historicalTelemetryWriter, TrackedServerRepository trackedServerRepository) {
         this.redisTemplate = redisTemplate;
         this.statusRepository = statusRepository;
         this.historicalTelemetryWriter = historicalTelemetryWriter;
+        this.trackedServerRepository = trackedServerRepository;
     }
 
     public void process(ServerPingResultEvent event) {
-
 
         redisTemplate.opsForValue().set(
                 "live:server:" + event.serverAddress(),
@@ -50,15 +52,42 @@ public class TelemetryEventProcessor {
 
         statusRepository.save(latestStatus);
 
+        trackedServerRepository.findByAddress(
+                event.serverAddress()
+        ).ifPresent(server -> {
+
+            server.setCurrentPlayers(
+                    event.onlinePlayers()
+            );
+
+            server.setMaxPlayerCount(
+                    event.maxPlayers()
+            );
+
+            server.setUpdatedAt(
+                    System.currentTimeMillis()
+            );
+
+            trackedServerRepository.save(server);
+        });
+
         processedCounter++;
 
         long now = System.currentTimeMillis();
+
         if (now - lastLogTime >= 5000) {
-            System.out.println("STATUS CONSUMER BATCH COMPLETE -> materialized " + processedCounter + " events");
+
+            System.out.println(
+                    "STATUS CONSUMER BATCH COMPLETE -> materialized "
+                            + processedCounter
+                            + " events"
+            );
+
             processedCounter = 0;
             lastLogTime = now;
         }
 
         historicalTelemetryWriter.append(event);
     }
+
 }

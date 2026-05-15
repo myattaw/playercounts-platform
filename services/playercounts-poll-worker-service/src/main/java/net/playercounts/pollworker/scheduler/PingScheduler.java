@@ -43,8 +43,7 @@ public class PingScheduler {
 
         long batchStart = System.currentTimeMillis();
 
-        List<TrackedServer> servers =
-                trackedServerService.getActiveServers();
+        List<TrackedServer> servers = trackedServerService.getActiveServers();
 
         List<CompletableFuture<Void>> futures = servers.stream()
                 .map(server -> CompletableFuture.runAsync(() -> {
@@ -81,11 +80,10 @@ public class PingScheduler {
                 .allOf(futures.toArray(new CompletableFuture[0]))
                 .join();
 
-        long durationMs =
-                System.currentTimeMillis() - batchStart;
+        long durationMs = System.currentTimeMillis() - batchStart;
 
         System.out.println(
-                "POLL WORKER BATCH COMPLETE -> emitted "
+                "POLL WORKER BATCH COMPLETE2 -> emitted "
                         + servers.size()
                         + " minecraft ping events in "
                         + durationMs

@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
-@Component
+//@Component
 public class FakePingScheduler {
 
     private final TelemetryEventPublisher telemetryEventPublisher;
@@ -37,7 +37,7 @@ public class FakePingScheduler {
         this.pollWorkerExecutor = pollWorkerExecutor;
     }
 
-    @Scheduled(fixedRateString = "${poll-worker.scheduler-interval-ms}")
+//    @Scheduled(fixedRateString = "${poll-worker.scheduler-interval-ms}")
     public void publishRealPingBatch() {
         long batchStart = System.currentTimeMillis();
 

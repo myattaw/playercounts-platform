@@ -44,6 +44,12 @@ public class TrackedServer {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private int currentPlayers = 0;
+
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private int maxPlayerCount = 0;
+
     private long createdAt;
 
     private long updatedAt;

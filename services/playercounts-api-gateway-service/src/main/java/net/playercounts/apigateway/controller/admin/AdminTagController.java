@@ -45,7 +45,6 @@ public class AdminTagController {
     @Operation(summary = "Get all tags")
     @GetMapping
     public List<TagResponse> getTags() {
-
         return adminTagService.getTags();
     }
 

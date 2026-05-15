@@ -9,7 +9,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @SpringBootApplication
 @EntityScan(basePackages = "net.playercounts.models.entity")
-@EnableJpaRepositories(basePackages = "net.playercounts.pollworker.repository")
+@EnableJpaRepositories(basePackages = {
+        "net.playercounts.models.repository"
+})
 public class PlayercountsPollWorkerApplication {
 
     public static void main(String[] args) {

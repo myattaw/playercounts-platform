@@ -2,7 +2,7 @@ package net.playercounts.pollworker.service;
 
 import jakarta.annotation.PostConstruct;
 import net.playercounts.models.entity.TrackedServer;
-import net.playercounts.pollworker.repository.TrackedServerRepository;
+import net.playercounts.models.repository.TrackedServerRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 

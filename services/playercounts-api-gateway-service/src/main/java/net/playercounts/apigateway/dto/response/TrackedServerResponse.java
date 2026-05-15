@@ -8,6 +8,8 @@ public record TrackedServerResponse(
         String displayName,
         List<TagResponse> tags,
         String graphColor,
+        int currentPlayers,
+        int maxPlayerCount,
         boolean active
 ) {
 }

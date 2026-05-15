@@ -6,12 +6,12 @@ import net.playercounts.apigateway.dto.response.TagResponse;
 import net.playercounts.apigateway.dto.response.TrackedServerResponse;
 
 import net.playercounts.apigateway.repository.admin.TagRepository;
-import net.playercounts.apigateway.repository.admin.TrackedServerRepository;
 
 import net.playercounts.models.MinecraftPingResult;
 import net.playercounts.models.entity.ServerTag;
 import net.playercounts.models.entity.TrackedServer;
 
+import net.playercounts.models.repository.TrackedServerRepository;
 import net.playercounts.service.MinecraftPingService;
 
 import org.springframework.stereotype.Service;
@@ -30,15 +30,9 @@ public class AdminTrackedServerService {
             TagRepository tagRepository,
             MinecraftPingService minecraftPingService
     ) {
-
-        this.trackedServerRepository =
-                trackedServerRepository;
-
-        this.tagRepository =
-                tagRepository;
-
-        this.minecraftPingService =
-                minecraftPingService;
+        this.trackedServerRepository = trackedServerRepository;
+        this.tagRepository = tagRepository;
+        this.minecraftPingService = minecraftPingService;
     }
 
     public TrackedServerResponse createServer(
@@ -54,8 +48,7 @@ public class AdminTrackedServerService {
             );
         });
 
-        MinecraftPingResult pingResult =
-                minecraftPingService.ping(
+        MinecraftPingResult pingResult = minecraftPingService.ping(
                         request.address(),
                         25565
                 );
@@ -72,43 +65,21 @@ public class AdminTrackedServerService {
                         request.tagIds()
                 );
 
-        String graphColor =
-                generateDefaultColor();
+        String graphColor = generateDefaultColor();
 
-        TrackedServer trackedServer =
-                new TrackedServer();
-
-        trackedServer.setAddress(
-                request.address()
-        );
-
-        trackedServer.setDisplayName(
-                request.displayName()
-        );
-
-        trackedServer.setTags(tags);
-
-        trackedServer.setColor(
-                graphColor
-        );
-
-        trackedServer.setIcon(
-                pingResult.icon()
-        );
-
+        TrackedServer trackedServer = new TrackedServer();
         trackedServer.setActive(true);
+        trackedServer.setAddress(request.address());
+        trackedServer.setDisplayName(request.displayName());
+        trackedServer.setTags(tags);
+        trackedServer.setColor(graphColor);
+        trackedServer.setIcon(pingResult.icon());
+        trackedServer.setCurrentPlayers(pingResult.onlinePlayers());
+        trackedServer.setMaxPlayerCount(pingResult.maxPlayers());
+        trackedServer.setCreatedAt(System.currentTimeMillis());
+        trackedServer.setUpdatedAt(System.currentTimeMillis());
 
-        trackedServer.setCreatedAt(
-                System.currentTimeMillis()
-        );
-
-        trackedServer.setUpdatedAt(
-                System.currentTimeMillis()
-        );
-
-        trackedServerRepository.save(
-                trackedServer
-        );
+        trackedServerRepository.save(trackedServer);
 
         return mapResponse(trackedServer);
     }
@@ -136,35 +107,18 @@ public class AdminTrackedServerService {
             UpdateTrackedServerRequest request
     ) {
 
-        TrackedServer trackedServer =
-                getTrackedServerOrThrow(id);
+        TrackedServer trackedServer = getTrackedServerOrThrow(id);
 
-        List<ServerTag> tags =
-                tagRepository.findAllById(
-                        request.tagIds()
-                );
-
-        trackedServer.setDisplayName(
-                request.displayName()
+        List<ServerTag> tags = tagRepository.findAllById(
+                request.tagIds()
         );
 
+        trackedServer.setDisplayName(request.displayName());
         trackedServer.setTags(tags);
-
-        trackedServer.setColor(
-                request.graphColor()
-        );
-
-        trackedServer.setActive(
-                request.active()
-        );
-
-        trackedServer.setUpdatedAt(
-                System.currentTimeMillis()
-        );
-
-        trackedServerRepository.save(
-                trackedServer
-        );
+        trackedServer.setColor(request.graphColor());
+        trackedServer.setActive(request.active());
+        trackedServer.setUpdatedAt(System.currentTimeMillis());
+        trackedServerRepository.save(trackedServer);
 
         return mapResponse(trackedServer);
     }
@@ -174,18 +128,10 @@ public class AdminTrackedServerService {
             boolean active
     ) {
 
-        TrackedServer trackedServer =
-                getTrackedServerOrThrow(id);
-
+        TrackedServer trackedServer = getTrackedServerOrThrow(id);
         trackedServer.setActive(active);
-
-        trackedServer.setUpdatedAt(
-                System.currentTimeMillis()
-        );
-
-        trackedServerRepository.save(
-                trackedServer
-        );
+        trackedServer.setUpdatedAt(System.currentTimeMillis());
+        trackedServerRepository.save(trackedServer);
 
         return mapResponse(trackedServer);
     }
@@ -194,8 +140,7 @@ public class AdminTrackedServerService {
             Long id
     ) {
 
-        TrackedServer trackedServer =
-                getTrackedServerOrThrow(id);
+        TrackedServer trackedServer = getTrackedServerOrThrow(id);
 
         MinecraftPingResult pingResult =
                 minecraftPingService.ping(
@@ -216,6 +161,14 @@ public class AdminTrackedServerService {
 
         trackedServer.setUpdatedAt(
                 System.currentTimeMillis()
+        );
+
+        trackedServer.setCurrentPlayers(
+                pingResult.onlinePlayers()
+        );
+
+        trackedServer.setMaxPlayerCount(
+                pingResult.maxPlayers()
         );
 
         trackedServerRepository.save(
@@ -270,6 +223,8 @@ public class AdminTrackedServerService {
                 trackedServer.getDisplayName(),
                 tags,
                 trackedServer.getColor(),
+                trackedServer.getCurrentPlayers(),
+                trackedServer.getMaxPlayerCount(),
                 trackedServer.isActive()
         );
     }

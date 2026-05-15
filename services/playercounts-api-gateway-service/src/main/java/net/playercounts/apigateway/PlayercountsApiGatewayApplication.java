@@ -11,7 +11,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         "net.playercounts.models",
         "net.playercounts.apigateway.entity"
 })
-@EnableJpaRepositories(basePackages = "net.playercounts.apigateway.repository")
+@EnableJpaRepositories(basePackages = {
+        "net.playercounts.models.repository",
+        "net.playercounts.apigateway.repository"
+})
 @EnableScheduling
 public class PlayercountsApiGatewayApplication {
 
