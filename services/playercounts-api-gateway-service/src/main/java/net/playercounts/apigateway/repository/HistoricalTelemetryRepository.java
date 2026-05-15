@@ -23,30 +23,135 @@ public class HistoricalTelemetryRepository {
     }
 
     public List<ServerAggregateRow> getServerAggregates() {
+
         List<ServerAggregateRow> rows = new ArrayList<>();
 
-        try (PreparedStatement statement = clickHouseConnection.prepareStatement("""
-            SELECT
-                server_address,
-                argMax(online_players, event_timestamp) AS current_players,
-                max(online_players) AS peak_players,
-                avg(online_players) AS avg_players
-            FROM server_ping_history
-            GROUP BY server_address
-        """);
+        try (PreparedStatement statement =
+                     clickHouseConnection.prepareStatement("""
+
+        SELECT
+            server_address,
+
+            argMax(online_players, event_timestamp)
+                AS current_players,
+
+            max(online_players)
+                AS peak_players,
+
+            avg(online_players)
+                AS avg_players,
+
+            avgIf(
+                online_players,
+                event_timestamp >= now() - INTERVAL 1 HOUR
+            ) AS recent_avg,
+
+            avgIf(
+                online_players,
+                event_timestamp BETWEEN
+                    now() - INTERVAL 25 HOUR
+                    AND
+                    now() - INTERVAL 24 HOUR
+            ) AS avg_24h_ago,
+
+            avgIf(
+                online_players,
+                event_timestamp BETWEEN
+                    now() - INTERVAL 8 DAY
+                    AND
+                    now() - INTERVAL 7 DAY
+            ) AS avg_7d_ago,
+
+            avgIf(
+                online_players,
+                event_timestamp BETWEEN
+                    now() - INTERVAL 31 DAY
+                    AND
+                    now() - INTERVAL 30 DAY
+            ) AS avg_30d_ago
+
+        FROM server_ping_history
+
+        GROUP BY server_address
+
+    """);
              ResultSet rs = statement.executeQuery()) {
 
             while (rs.next()) {
+
+                int avgPlayers =
+                        (int) Math.round(
+                                rs.getDouble("avg_players")
+                        );
+
+                double recentAvg =
+                        rs.getDouble("recent_avg");
+
+                double avg24hAgo =
+                        rs.getDouble("avg_24h_ago");
+
+                double avg7dAgo =
+                        rs.getDouble("avg_7d_ago");
+
+                double avg30dAgo =
+                        rs.getDouble("avg_30d_ago");
+
+                double growth24h =
+                        calculateGrowth(
+                                recentAvg,
+                                avg24hAgo
+                        );
+
+                double growth7d =
+                        calculateGrowth(
+                                recentAvg,
+                                avg7dAgo
+                        );
+
+                double growth30d =
+                        calculateGrowth(
+                                recentAvg,
+                                avg30dAgo
+                        );
+
+                double trendingScore = 0;
+
+                // minimum threshold
+                if (avgPlayers >= 100) {
+
+                    trendingScore =
+                            growth24h
+                                    * Math.log10(
+                                    Math.max(avgPlayers, 1)
+                            );
+                }
+
                 rows.add(new ServerAggregateRow(
+
                         rs.getString("server_address"),
+
                         rs.getInt("current_players"),
+
                         rs.getInt("peak_players"),
-                        (int) Math.round(rs.getDouble("avg_players"))
+
+                        avgPlayers,
+
+                        growth24h,
+
+                        growth7d,
+
+                        growth30d,
+
+                        trendingScore
                 ));
             }
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load server aggregates", e);
+
+            throw new RuntimeException(
+                    "Failed to load server aggregates",
+                    e
+            );
         }
 
         return rows;
@@ -201,6 +306,18 @@ public class HistoricalTelemetryRepository {
         }
 
         return null;
+    }
+
+    private double calculateGrowth(
+            double current,
+            double previous
+    ) {
+
+        if (previous <= 0) {
+            return 0;
+        }
+
+        return ((current - previous) / previous) * 100.0;
     }
 
 }

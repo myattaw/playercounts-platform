@@ -159,7 +159,7 @@ public class PlatformTelemetryService {
         Comparator<ServerAggregateRow> comparator = switch (mode) {
             case LIVE -> Comparator.comparingInt(ServerAggregateRow::currentPlayers).reversed();
             case PEAK -> Comparator.comparingInt(ServerAggregateRow::peakPlayers).reversed();
-            case TRENDING -> Comparator.comparingInt(ServerAggregateRow::avgPlayers).reversed();
+            case TRENDING -> Comparator.comparingDouble(ServerAggregateRow::trendingScore).reversed();
         };
 
         return rows.stream()
