@@ -5,7 +5,8 @@ import net.playercounts.apigateway.repository.row.ServerAggregateRow;
 import net.playercounts.models.snapshot.TopServerSnapshot;
 import net.playercounts.models.snapshot.graph.GraphHistoryPoint;
 import net.playercounts.models.snapshot.graph.GraphServerSnapshot;
-import net.playercounts.models.snapshot.platform.*;
+import net.playercounts.models.snapshot.platform.PlatformDashboardSnapshot;
+import net.playercounts.models.snapshot.platform.PlatformOverviewSnapshot;
 import net.playercounts.models.snapshot.server.SelectableServerSnapshot;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -180,6 +181,7 @@ public class PlatformTelemetryService {
             int rank,
             String iconBase64
     ) {
+
         int colorIndex = rank > 0
                 ? (rank - 1) % COLORS.length
                 : Math.abs(row.address().hashCode()) % COLORS.length;
@@ -188,6 +190,9 @@ public class PlatformTelemetryService {
                 row.address(),
                 row.currentPlayers(),
                 row.peakPlayers(),
+                row.growth24hPercent(),
+                row.growth7dPercent(),
+                row.growth30dPercent(),
                 history,
                 COLORS[colorIndex],
                 rank,

@@ -29,50 +29,66 @@ public class HistoricalTelemetryRepository {
         try (PreparedStatement statement =
                      clickHouseConnection.prepareStatement("""
 
-        SELECT
-            server_address,
+    SELECT
+        server_address,
 
-            argMax(online_players, event_timestamp)
-                AS current_players,
+        argMax(online_players, event_timestamp)
+            AS current_players,
 
-            max(online_players)
-                AS peak_players,
+        max(online_players)
+            AS peak_players,
 
-            avg(online_players)
-                AS avg_players,
+        avg(online_players)
+            AS avg_players,
 
-            avgIf(
-                online_players,
-                event_timestamp >= now() - INTERVAL 1 HOUR
-            ) AS recent_avg,
+        -- Last 24h average
+        avgIf(
+            online_players,
+            event_timestamp >= now() - INTERVAL 24 HOUR
+        ) AS recent_24h_avg,
 
-            avgIf(
-                online_players,
-                event_timestamp BETWEEN
-                    now() - INTERVAL 25 HOUR
-                    AND
-                    now() - INTERVAL 24 HOUR
-            ) AS avg_24h_ago,
+        -- Previous 24h average
+        avgIf(
+            online_players,
+            event_timestamp BETWEEN
+                now() - INTERVAL 48 HOUR
+                AND
+                now() - INTERVAL 24 HOUR
+        ) AS previous_24h_avg,
 
-            avgIf(
-                online_players,
-                event_timestamp BETWEEN
-                    now() - INTERVAL 8 DAY
-                    AND
-                    now() - INTERVAL 7 DAY
-            ) AS avg_7d_ago,
+        -- Last 7d average
+        avgIf(
+            online_players,
+            event_timestamp >= now() - INTERVAL 7 DAY
+        ) AS recent_7d_avg,
 
-            avgIf(
-                online_players,
-                event_timestamp BETWEEN
-                    now() - INTERVAL 31 DAY
-                    AND
-                    now() - INTERVAL 30 DAY
-            ) AS avg_30d_ago
+        -- Previous 7d average
+        avgIf(
+            online_players,
+            event_timestamp BETWEEN
+                now() - INTERVAL 14 DAY
+                AND
+                now() - INTERVAL 7 DAY
+        ) AS previous_7d_avg,
 
-        FROM server_ping_history
+        -- Last 30d average
+        avgIf(
+            online_players,
+            event_timestamp >= now() - INTERVAL 30 DAY
+        ) AS recent_30d_avg,
 
-        GROUP BY server_address
+        -- Previous 30d average
+        avgIf(
+            online_players,
+            event_timestamp BETWEEN
+                now() - INTERVAL 60 DAY
+                AND
+                now() - INTERVAL 30 DAY
+        ) AS previous_30d_avg
+
+    FROM server_ping_history
+
+    GROUP BY server_address
 
     """);
              ResultSet rs = statement.executeQuery()) {
@@ -84,39 +100,26 @@ public class HistoricalTelemetryRepository {
                                 rs.getDouble("avg_players")
                         );
 
-                double recentAvg =
-                        rs.getDouble("recent_avg");
-
-                double avg24hAgo =
-                        rs.getDouble("avg_24h_ago");
-
-                double avg7dAgo =
-                        rs.getDouble("avg_7d_ago");
-
-                double avg30dAgo =
-                        rs.getDouble("avg_30d_ago");
-
                 double growth24h =
                         calculateGrowth(
-                                recentAvg,
-                                avg24hAgo
+                                rs.getDouble("recent_24h_avg"),
+                                rs.getDouble("previous_24h_avg")
                         );
 
                 double growth7d =
                         calculateGrowth(
-                                recentAvg,
-                                avg7dAgo
+                                rs.getDouble("recent_7d_avg"),
+                                rs.getDouble("previous_7d_avg")
                         );
 
                 double growth30d =
                         calculateGrowth(
-                                recentAvg,
-                                avg30dAgo
+                                rs.getDouble("recent_30d_avg"),
+                                rs.getDouble("previous_30d_avg")
                         );
 
                 double trendingScore = 0;
 
-                // minimum threshold
                 if (avgPlayers >= 100) {
 
                     trendingScore =
@@ -313,11 +316,28 @@ public class HistoricalTelemetryRepository {
             double previous
     ) {
 
-        if (previous <= 0) {
+        if (
+                Double.isNaN(current)
+                        || Double.isNaN(previous)
+                        || Double.isInfinite(current)
+                        || Double.isInfinite(previous)
+                        || previous <= 0
+        ) {
             return 0;
         }
 
-        return ((current - previous) / previous) * 100.0;
+        double growth =
+                ((current - previous) / previous)
+                        * 100.0;
+
+        if (
+                Double.isNaN(growth)
+                        || Double.isInfinite(growth)
+        ) {
+            return 0;
+        }
+
+        return Math.round(growth * 100.0) / 100.0;
     }
 
 }
