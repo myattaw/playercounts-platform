@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.playercounts.apigateway.dto.request.CreateTrackedServerRequest;
 import net.playercounts.apigateway.dto.request.UpdateTrackedServerRequest;
+import net.playercounts.apigateway.dto.request.ValidateServerRequest;
+import net.playercounts.apigateway.dto.response.ServerValidationResponse;
 import net.playercounts.apigateway.dto.response.TrackedServerResponse;
 import net.playercounts.apigateway.service.admin.AdminTrackedServerService;
 import org.springframework.http.HttpStatus;
@@ -82,6 +84,15 @@ public class AdminTrackedServerController {
             @PathVariable("id") Long id
     ) {
         trackedServerService.deleteServer(id);
+    }
+
+    @PostMapping("/validate")
+    public ServerValidationResponse validateServer(
+            @RequestBody ValidateServerRequest request
+    ) {
+        return trackedServerService.validateServer(
+                request.address()
+        );
     }
 
 }

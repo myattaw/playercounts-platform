@@ -2,6 +2,7 @@ package net.playercounts.apigateway.service.admin;
 
 import net.playercounts.apigateway.dto.request.CreateTrackedServerRequest;
 import net.playercounts.apigateway.dto.request.UpdateTrackedServerRequest;
+import net.playercounts.apigateway.dto.response.ServerValidationResponse;
 import net.playercounts.apigateway.dto.response.TagResponse;
 import net.playercounts.apigateway.dto.response.TrackedServerResponse;
 
@@ -16,6 +17,7 @@ import net.playercounts.service.MinecraftPingService;
 
 import org.springframework.stereotype.Service;
 
+import java.util.Base64;
 import java.util.List;
 
 @Service
@@ -229,6 +231,34 @@ public class AdminTrackedServerService {
         );
     }
 
+    public ServerValidationResponse validateServer(
+            String address
+    ) {
+
+        MinecraftPingResult result =
+                minecraftPingService.ping(
+                        address,
+                        25565
+                );
+
+        return new ServerValidationResponse(
+
+                result.online(),
+
+                result.onlinePlayers(),
+
+                result.maxPlayers(),
+
+                result.latencyMs(),
+
+
+                result.icon() != null
+                        ? Base64.getEncoder()
+                        .encodeToString(result.icon())
+                        : null
+        );
+    }
+
     private String generateDefaultColor() {
 
         String[] colors = {
@@ -249,4 +279,6 @@ public class AdminTrackedServerService {
 
         return colors[index];
     }
+
+
 }
