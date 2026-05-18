@@ -39,7 +39,7 @@ Two local development workflows are supported:
 Start only the infrastructure dependencies:
 
 ```bash
-docker compose up kafka zookeeper redis postgres
+docker compose up kafka zookeeper redis postgres clickhouse
 ```
 
 Then run the three Spring Boot services from your IDE using the `local` profile.

@@ -28,6 +28,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() ->
                         new UsernameNotFoundException("User not found"));
 
+        System.out.println(account.getRole());
+
         return new User(
                 account.getUsername(),
                 account.getPassword(),

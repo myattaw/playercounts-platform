@@ -12,6 +12,6 @@ public record PlatformDashboardSnapshot(
         List<SelectableServerSnapshot> selectableServers,
         List<TopServerSnapshot> topLive,
         List<TopServerSnapshot> topPeak,
-        List<TopServerSnapshot> topTrending
+        List<TopServerSnapshot> trendingServers
 ) {
 }

@@ -7,4 +7,9 @@ public record CreateTrackedServerRequest(
         String displayName,
         List<Long> tagIds
 ) {
+    public CreateTrackedServerRequest {
+        if (tagIds == null) {
+            tagIds = List.of();
+        }
+    }
 }

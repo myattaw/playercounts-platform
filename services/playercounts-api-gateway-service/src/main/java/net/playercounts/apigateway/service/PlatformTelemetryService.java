@@ -33,9 +33,11 @@ public class PlatformTelemetryService {
     private final HistoricalTelemetryRepository repository;
 
     private volatile PlatformDashboardSnapshot cachedDashboard;
+    private volatile List<TopServerSnapshot> cachedTrending = new ArrayList<>();
 
     public PlatformTelemetryService(HistoricalTelemetryRepository repository) {
         this.repository = repository;
+        refreshTrending();
         this.cachedDashboard = buildDashboard();
     }
 
@@ -67,46 +69,123 @@ public class PlatformTelemetryService {
         );
     }
 
+    @Scheduled(fixedRate = 300000)
+    public void refreshTrending() {
+
+        List<ServerAggregateRow> trending =
+                repository.getTrendingServers();
+
+        Set<String> iconAddresses =
+                trending.stream()
+                        .map(ServerAggregateRow::address)
+                        .collect(Collectors.toSet());
+
+        Map<String, String> icons =
+                repository.getServerIcons(iconAddresses);
+
+        cachedTrending =
+                buildTopServers(
+                        trending,
+                        SortMode.TRENDING,
+                        icons
+                );
+    }
+
     private PlatformDashboardSnapshot buildDashboard() {
-        List<ServerAggregateRow> aggregates = repository.getServerAggregates();
+
+        // Stable analytics
+        List<ServerAggregateRow> aggregates =
+                repository.getServerAggregates();
 
         List<ServerAggregateRow> byPeak = aggregates.stream()
-                .sorted(Comparator.comparingInt(ServerAggregateRow::peakPlayers).reversed())
+
+                .sorted(
+                        Comparator.comparingInt(
+                                ServerAggregateRow::peakPlayers
+                        ).reversed()
+                )
+
                 .toList();
 
         List<ServerAggregateRow> graphRows = byPeak.stream()
+
                 .limit(8)
+
                 .toList();
 
         List<String> graphAddresses = graphRows.stream()
+
                 .map(ServerAggregateRow::address)
+
                 .toList();
 
-        Map<String, List<GraphHistoryPoint>> histories = repository.getGraphHistories(graphAddresses);
-        Map<String, String> icons = repository.getServerIcons(
-                aggregates.stream().map(ServerAggregateRow::address).toList()
-        );
+        Map<String, List<GraphHistoryPoint>> histories =
+                repository.getGraphHistories(graphAddresses);
 
-        PlatformOverviewSnapshot overview = buildOverview(aggregates);
+        Set<String> iconAddresses = new HashSet<>();
 
-        List<GraphServerSnapshot> graphServers = new ArrayList<>();
+        aggregates.stream()
+                .map(ServerAggregateRow::address)
+                .forEach(iconAddresses::add);
+
+        // Include cached trending icons too
+        cachedTrending.stream()
+                .map(TopServerSnapshot::address)
+                .forEach(iconAddresses::add);
+
+        Map<String, String> icons =
+                repository.getServerIcons(iconAddresses);
+
+        PlatformOverviewSnapshot overview =
+                buildOverview(aggregates);
+
+        List<GraphServerSnapshot> graphServers =
+                new ArrayList<>();
+
         for (int i = 0; i < graphRows.size(); i++) {
+
             ServerAggregateRow row = graphRows.get(i);
-            graphServers.add(toGraphServerSnapshot(
-                    row,
-                    histories.getOrDefault(row.address(), List.of()),
-                    i + 1,
-                    icons.get(row.address())
-            ));
+
+            graphServers.add(
+                    toGraphServerSnapshot(
+                            row,
+                            histories.getOrDefault(
+                                    row.address(),
+                                    List.of()
+                            ),
+                            i + 1,
+                            icons.get(row.address())
+                    )
+            );
         }
 
         return new PlatformDashboardSnapshot(
+
                 overview,
+
                 graphServers,
-                buildSelectableServers(byPeak, icons),
-                buildTopServers(aggregates, SortMode.LIVE),
-                buildTopServers(aggregates, SortMode.PEAK),
-                buildTopServers(aggregates, SortMode.TRENDING)
+
+                buildSelectableServers(
+                        byPeak,
+                        icons
+                ),
+
+                // Top live servers
+                buildTopServers(
+                        aggregates,
+                        SortMode.LIVE,
+                        icons
+                ),
+
+                // Top peak servers
+                buildTopServers(
+                        aggregates,
+                        SortMode.PEAK,
+                        icons
+                ),
+
+                // Cached trending servers
+                cachedTrending
         );
     }
 
@@ -156,11 +235,28 @@ public class PlatformTelemetryService {
         return result;
     }
 
-    private List<TopServerSnapshot> buildTopServers(List<ServerAggregateRow> rows, SortMode mode) {
+    private List<TopServerSnapshot> buildTopServers(
+            List<ServerAggregateRow> rows,
+            SortMode mode,
+            Map<String, String> icons
+    ) {
+
         Comparator<ServerAggregateRow> comparator = switch (mode) {
-            case LIVE -> Comparator.comparingInt(ServerAggregateRow::currentPlayers).reversed();
-            case PEAK -> Comparator.comparingInt(ServerAggregateRow::peakPlayers).reversed();
-            case TRENDING -> Comparator.comparingDouble(ServerAggregateRow::trendingScore).reversed();
+
+            case LIVE ->
+                    Comparator.comparingInt(
+                            ServerAggregateRow::currentPlayers
+                    ).reversed();
+
+            case PEAK ->
+                    Comparator.comparingInt(
+                            ServerAggregateRow::peakPlayers
+                    ).reversed();
+
+            case TRENDING ->
+                    Comparator.comparingDouble(
+                            ServerAggregateRow::trendingScore
+                    ).reversed();
         };
 
         return rows.stream()
@@ -170,8 +266,14 @@ public class PlatformTelemetryService {
                         row.address(),
                         row.currentPlayers(),
                         row.peakPlayers(),
-                        row.avgPlayers()
+                        row.avgPlayers(),
+                        row.growth24hPercent(),
+                        row.growth7dPercent(),
+                        row.growth30dPercent(),
+                        row.trendingScore(),
+                        icons.get(row.address())
                 ))
+
                 .collect(Collectors.toList());
     }
 

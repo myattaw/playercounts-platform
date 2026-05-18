@@ -77,12 +77,14 @@ public class AdminTrackedServerController {
         return trackedServerService.refreshServer(id);
     }
 
-    @Operation(summary = "Delete tracked server")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteServer(
             @PathVariable("id") Long id
     ) {
+
+        System.out.println("DELETE ENDPOINT HIT");
+
         trackedServerService.deleteServer(id);
     }
 

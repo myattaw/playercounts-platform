@@ -16,6 +16,7 @@ import net.playercounts.models.repository.TrackedServerRepository;
 import net.playercounts.service.MinecraftPingService;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Base64;
 import java.util.List;
@@ -180,16 +181,22 @@ public class AdminTrackedServerService {
         return mapResponse(trackedServer);
     }
 
+    @Transactional
     public void deleteServer(Long id) {
 
-        if (!trackedServerRepository.existsById(id)) {
+        TrackedServer server =
+                trackedServerRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalStateException(
+                                        "Tracked server not found"
+                                )
+                        );
 
-            throw new IllegalStateException(
-                    "Tracked server not found"
-            );
-        }
+        server.getTags().clear();
 
-        trackedServerRepository.deleteById(id);
+        trackedServerRepository.save(server);
+
+        trackedServerRepository.delete(server);
     }
 
     private TrackedServer getTrackedServerOrThrow(

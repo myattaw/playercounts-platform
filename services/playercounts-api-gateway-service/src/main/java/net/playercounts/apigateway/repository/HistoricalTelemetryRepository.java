@@ -7,7 +7,9 @@ import net.playercounts.models.snapshot.graph.GraphHistoryPoint;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.*;
 
 @Repository
@@ -28,106 +30,29 @@ public class HistoricalTelemetryRepository {
 
         try (PreparedStatement statement =
                      clickHouseConnection.prepareStatement("""
-
-    SELECT
-        server_address,
-
-        argMax(online_players, event_timestamp)
-            AS current_players,
-
-        max(online_players)
-            AS peak_players,
-
-        avg(online_players)
-            AS avg_players,
-
-        -- Last 24h average
-        avgIf(
-            online_players,
-            event_timestamp >= now() - INTERVAL 24 HOUR
-        ) AS recent_24h_avg,
-
-        -- Previous 24h average
-        avgIf(
-            online_players,
-            event_timestamp BETWEEN
-                now() - INTERVAL 48 HOUR
-                AND
-                now() - INTERVAL 24 HOUR
-        ) AS previous_24h_avg,
-
-        -- Last 7d average
-        avgIf(
-            online_players,
-            event_timestamp >= now() - INTERVAL 7 DAY
-        ) AS recent_7d_avg,
-
-        -- Previous 7d average
-        avgIf(
-            online_players,
-            event_timestamp BETWEEN
-                now() - INTERVAL 14 DAY
-                AND
-                now() - INTERVAL 7 DAY
-        ) AS previous_7d_avg,
-
-        -- Last 30d average
-        avgIf(
-            online_players,
-            event_timestamp >= now() - INTERVAL 30 DAY
-        ) AS recent_30d_avg,
-
-        -- Previous 30d average
-        avgIf(
-            online_players,
-            event_timestamp BETWEEN
-                now() - INTERVAL 60 DAY
-                AND
-                now() - INTERVAL 30 DAY
-        ) AS previous_30d_avg
-
-    FROM server_ping_history
-
-    GROUP BY server_address
-
-    """);
+                                 SELECT
+                                     server_address,
+                             
+                                     argMax(
+                                         online_players,
+                                         event_timestamp
+                                     ) AS current_players,
+                             
+                                     max(online_players)
+                                         AS peak_players,
+                             
+                                     avg(online_players)
+                                         AS avg_players
+                             
+                                 FROM server_ping_history
+                             
+                                 WHERE event_timestamp >= now() - INTERVAL 30 DAY
+                             
+                                 GROUP BY server_address
+                             """);
              ResultSet rs = statement.executeQuery()) {
 
             while (rs.next()) {
-
-                int avgPlayers =
-                        (int) Math.round(
-                                rs.getDouble("avg_players")
-                        );
-
-                double growth24h =
-                        calculateGrowth(
-                                rs.getDouble("recent_24h_avg"),
-                                rs.getDouble("previous_24h_avg")
-                        );
-
-                double growth7d =
-                        calculateGrowth(
-                                rs.getDouble("recent_7d_avg"),
-                                rs.getDouble("previous_7d_avg")
-                        );
-
-                double growth30d =
-                        calculateGrowth(
-                                rs.getDouble("recent_30d_avg"),
-                                rs.getDouble("previous_30d_avg")
-                        );
-
-                double trendingScore = 0;
-
-                if (avgPlayers >= 100) {
-
-                    trendingScore =
-                            growth24h
-                                    * Math.log10(
-                                    Math.max(avgPlayers, 1)
-                            );
-                }
 
                 rows.add(new ServerAggregateRow(
 
@@ -137,15 +62,14 @@ public class HistoricalTelemetryRepository {
 
                         rs.getInt("peak_players"),
 
-                        avgPlayers,
+                        (int) Math.round(
+                                rs.getDouble("avg_players")
+                        ),
 
-                        growth24h,
-
-                        growth7d,
-
-                        growth30d,
-
-                        trendingScore
+                        0,
+                        0,
+                        0,
+                        0
                 ));
             }
 
@@ -160,11 +84,203 @@ public class HistoricalTelemetryRepository {
         return rows;
     }
 
+    public List<ServerAggregateRow> getTrendingServers() {
+
+        List<ServerAggregateRow> rows = new ArrayList<>();
+
+        try (PreparedStatement statement =
+                     clickHouseConnection.prepareStatement("""
+                             
+                                 SELECT
+                                     server_address,
+                             
+                                     argMax(
+                                         online_players,
+                                         event_timestamp
+                                     ) AS current_players,
+                             
+                                     max(online_players)
+                                         AS peak_players,
+                             
+                                     avg(online_players)
+                                         AS avg_players,
+                             
+                                     -- Last 15 minutes
+                                     avgIf(
+                                         online_players,
+                                         event_timestamp >= now() - INTERVAL 15 MINUTE
+                                     ) AS current_15m_avg,
+                             
+                                     -- 15-30 minutes ago
+                                     avgIf(
+                                         online_players,
+                                         event_timestamp BETWEEN
+                                             now() - INTERVAL 30 MINUTE
+                                             AND now() - INTERVAL 15 MINUTE
+                                     ) AS previous_15m_avg,
+                             
+                                     -- Last 1 hour
+                                     avgIf(
+                                         online_players,
+                                         event_timestamp >= now() - INTERVAL 1 HOUR
+                                     ) AS current_1h_avg,
+                             
+                                     -- 1-2 hours ago
+                                     avgIf(
+                                         online_players,
+                                         event_timestamp BETWEEN
+                                             now() - INTERVAL 2 HOUR
+                                             AND now() - INTERVAL 1 HOUR
+                                     ) AS previous_1h_avg,
+                             
+                                     -- Last 6 hours
+                                     avgIf(
+                                         online_players,
+                                         event_timestamp >= now() - INTERVAL 6 HOUR
+                                     ) AS current_6h_avg,
+                             
+                                     -- 6-12 hours ago
+                                     avgIf(
+                                         online_players,
+                                         event_timestamp BETWEEN
+                                             now() - INTERVAL 12 HOUR
+                                             AND now() - INTERVAL 6 HOUR
+                                     ) AS previous_6h_avg
+                             
+                                 FROM server_ping_history
+                             
+                                 WHERE event_timestamp >= now() - INTERVAL 24 HOUR
+                             
+                                 GROUP BY server_address
+                             
+                                 HAVING
+                                     count() >= 3
+                                     AND current_players >= 100
+                             
+                             """);
+             ResultSet rs = statement.executeQuery()) {
+
+            while (rs.next()) {
+
+                String serverAddress =
+                        rs.getString("server_address");
+
+                int currentPlayers =
+                        rs.getInt("current_players");
+
+                int peakPlayers =
+                        rs.getInt("peak_players");
+
+                int avgPlayers =
+                        (int) Math.round(
+                                rs.getDouble("avg_players")
+                        );
+
+                double growth15m =
+                        calculateGrowth(
+                                rs.getDouble("current_15m_avg"),
+                                rs.getDouble("previous_15m_avg")
+                        );
+
+                double growth1h =
+                        calculateGrowth(
+                                rs.getDouble("current_1h_avg"),
+                                rs.getDouble("previous_1h_avg")
+                        );
+
+                double growth6h =
+                        calculateGrowth(
+                                rs.getDouble("current_6h_avg"),
+                                rs.getDouble("previous_6h_avg")
+                        );
+
+                // Stable weighted momentum
+                double momentum =
+                        (growth15m * 0.50)
+                                + (growth1h * 0.35)
+                                + (growth6h * 0.15);
+
+                double trendingScore = momentum;
+
+                // Prevent giant servers from dominating
+                if (currentPlayers > 20000) {
+                    trendingScore *= 0.10;
+                } else if (currentPlayers > 10000) {
+                    trendingScore *= 0.25;
+                } else if (currentPlayers > 5000) {
+                    trendingScore *= 0.50;
+                }
+
+                // Boost medium discovery servers
+                if (currentPlayers < 3000) {
+                    trendingScore *= 1.35;
+                }
+
+                // Strong spike boost
+                if (growth15m >= 25) {
+
+                    trendingScore *= 2.5;
+
+                } else if (growth15m >= 10) {
+
+                    trendingScore *= 1.5;
+                }
+
+                // Kill stagnant servers
+                if (growth15m < 1
+                        && growth1h < 2) {
+
+                    trendingScore *= 0.15;
+                }
+
+                // Prevent negative scores
+                trendingScore =
+                        Math.max(trendingScore, 0);
+
+                rows.add(new ServerAggregateRow(
+
+                        serverAddress,
+
+                        currentPlayers,
+
+                        peakPlayers,
+
+                        avgPlayers,
+
+                        growth1h,
+
+                        growth15m,
+
+                        growth6h,
+
+                        trendingScore
+                ));
+            }
+
+        } catch (Exception e) {
+
+            throw new RuntimeException(
+                    "Failed to load trending servers",
+                    e
+            );
+        }
+
+        rows.sort(
+                Comparator.comparingDouble(
+                        ServerAggregateRow::trendingScore
+                ).reversed()
+        );
+
+        return rows.stream()
+                .limit(10)
+                .toList();
+    }
+
     public long getTotalTelemetryPoints() {
         try (PreparedStatement statement = clickHouseConnection.prepareStatement("""
-            SELECT count() AS total_points
-            FROM server_ping_history
-        """);
+                    SELECT count() AS total_points
+                    FROM server_ping_history
+                """);
              ResultSet rs = statement.executeQuery()) {
 
             return rs.next() ? rs.getLong("total_points") : 0L;
@@ -185,16 +301,16 @@ public class HistoricalTelemetryRepository {
         String placeholders = String.join(",", Collections.nCopies(addressList.size(), "?"));
 
         String sql = """
-            SELECT
-                server_address,
-                toUnixTimestamp(toStartOfInterval(event_timestamp, INTERVAL 10 MINUTE)) * 1000 AS bucket_ts,
-                avg(online_players) AS avg_players
-            FROM server_ping_history
-            WHERE event_timestamp >= now() - INTERVAL 24 HOUR
-              AND server_address IN (%s)
-            GROUP BY server_address, bucket_ts
-            ORDER BY server_address, bucket_ts ASC
-        """.formatted(placeholders);
+                    SELECT
+                        server_address,
+                        toUnixTimestamp(toStartOfInterval(event_timestamp, INTERVAL 10 MINUTE)) * 1000 AS bucket_ts,
+                        avg(online_players) AS avg_players
+                    FROM server_ping_history
+                    WHERE event_timestamp >= now() - INTERVAL 24 HOUR
+                      AND server_address IN (%s)
+                    GROUP BY server_address, bucket_ts
+                    ORDER BY server_address, bucket_ts ASC
+                """.formatted(placeholders);
 
         try (PreparedStatement statement = clickHouseConnection.prepareStatement(sql)) {
             for (int i = 0; i < addressList.size(); i++) {
@@ -239,18 +355,18 @@ public class HistoricalTelemetryRepository {
         List<HistoricalPingPoint> results = new ArrayList<>();
 
         try (PreparedStatement statement = clickHouseConnection.prepareStatement("""
-            SELECT
-                server_address,
-                online_players,
-                max_players,
-                latency_ms,
-                online,
-                event_timestamp
-            FROM server_ping_history
-            WHERE server_address = ?
-            ORDER BY event_timestamp DESC
-            LIMIT 500
-            """)) {
+                SELECT
+                    server_address,
+                    online_players,
+                    max_players,
+                    latency_ms,
+                    online,
+                    event_timestamp
+                FROM server_ping_history
+                WHERE server_address = ?
+                ORDER BY event_timestamp DESC
+                LIMIT 500
+                """)) {
 
             statement.setString(1, address);
 
@@ -276,16 +392,16 @@ public class HistoricalTelemetryRepository {
 
     public ServerAnalyticsSnapshot getAnalytics(String address, int currentPlayers) {
         try (PreparedStatement statement = clickHouseConnection.prepareStatement("""
-            SELECT
-                max(online_players) AS peak_players,
-                avg(online_players) AS avg_players,
-                avg(latency_ms) AS avg_latency,
-                avg(if(online = 1, 100, 0)) AS uptime_percent,
-                min(event_timestamp) AS first_seen,
-                max(event_timestamp) AS last_seen
-            FROM server_ping_history
-            WHERE server_address = ?
-            """)) {
+                SELECT
+                    max(online_players) AS peak_players,
+                    avg(online_players) AS avg_players,
+                    avg(latency_ms) AS avg_latency,
+                    avg(if(online = 1, 100, 0)) AS uptime_percent,
+                    min(event_timestamp) AS first_seen,
+                    max(event_timestamp) AS last_seen
+                FROM server_ping_history
+                WHERE server_address = ?
+                """)) {
 
             statement.setString(1, address);
 
@@ -321,8 +437,19 @@ public class HistoricalTelemetryRepository {
                         || Double.isNaN(previous)
                         || Double.isInfinite(current)
                         || Double.isInfinite(previous)
-                        || previous <= 0
         ) {
+            return 0;
+        }
+
+        // NEW SERVER / SPIKE DETECTION
+        if (previous <= 0) {
+
+            // If server suddenly became active,
+            // treat as explosive momentum
+            if (current >= 15) {
+                return 100;
+            }
+
             return 0;
         }
 

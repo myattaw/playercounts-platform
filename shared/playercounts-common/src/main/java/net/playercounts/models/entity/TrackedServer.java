@@ -27,9 +27,9 @@ public class TrackedServer {
     @Column(nullable = false)
     private String displayName;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany
     @JoinTable(
-            name = "tracked_server_tag_map",
+            name = "tracked_server_tags",
             joinColumns = @JoinColumn(name = "server_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
